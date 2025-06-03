@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
             <div className="mb-4">
               <a href="#" className="inline-block">
                 <span className="font-heading font-bold text-2xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent dark:from-primary-400 dark:to-secondary-300">
-                  InvoiceFlow
+                  ZaytrixFlow
                 </span>
               </a>
             </div>
@@ -85,7 +85,7 @@ const Footer: React.FC = () => {
         
         <div className="pt-8 border-t border-gray-200 dark:border-gray-800 text-center sm:flex sm:justify-between sm:text-left">
           <p className="text-gray-500 dark:text-gray-400 mb-4 sm:mb-0">
-            © {currentYear} InvoiceFlow. All rights reserved.
+            © {currentYear} ZaytrixFlow. All rights reserved.
           </p>
           <div className="flex justify-center sm:justify-end space-x-4">
             <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Privacy</a>
