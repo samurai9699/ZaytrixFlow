@@ -85,7 +85,7 @@ const WaitlistForm: React.FC = () => {
                 </div>
                 <h3 className="text-xl font-semibold mb-2">You're on the list!</h3>
                 <p className="text-white/80">
-                  Thank you for joining our waitlist. We'll notify you as soon as InvoiceFlow is ready for you.
+                  Thank you for joining our waitlist. We'll notify you as soon as ZaytrixFlow is ready for you.
                 </p>
               </motion.div>
             )}
