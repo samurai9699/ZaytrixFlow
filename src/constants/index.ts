@@ -111,6 +111,6 @@ export const TESTIMONIALS: Testimonial[] = [
 export const STATS = [
   { value: "50M+", label: "Freelancers struggle with late payments" },
   { value: "42%", label: "Average payment delay for freelancers" },
-  { value: "73%", label: "Reduced payment time with InvoiceFlow" },
+  { value: "73%", label: "Reduced payment time with ZaytrixFlow" },
   { value: "8+ hrs", label: "Saved monthly on payment admin" },
 ];
