@@ -65,7 +65,7 @@ function App() {
                 </DashboardLayout>
               </ProtectedRoute>
             } />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/\" replace />} />
           </Routes>
         </div>
       </ThemeProvider>
