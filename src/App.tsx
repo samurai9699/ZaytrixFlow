@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { motion, useScroll, useSpring } from 'framer-motion';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Stats from './components/Stats';
@@ -10,9 +12,26 @@ import Testimonials from './components/Testimonials';
 import WaitlistForm from './components/WaitlistForm';
 import Footer from './components/Footer';
 import ScrollToTop from './utils/ScrollToTop';
+import LoginForm from './components/auth/LoginForm';
+import RegisterForm from './components/auth/RegisterForm';
+import DashboardLayout from './components/dashboard/DashboardLayout';
+import DashboardOverview from './components/dashboard/DashboardOverview';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+
+const LandingPage = () => (
+  <>
+    <Navbar />
+    <Hero />
+    <Stats />
+    <Features />
+    <Pricing />
+    <Testimonials />
+    <WaitlistForm />
+    <Footer />
+  </>
+);
 
 function App() {
-  // Smooth scroll progress indicator
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -20,31 +39,37 @@ function App() {
     restDelta: 0.001
   });
 
-  // Update page title
   useEffect(() => {
     document.title = "InvoiceFlow | Get Paid On Time, Every Time";
   }, []);
 
   return (
-    <ThemeProvider>
-      <div className="bg-background-light dark:bg-background-dark text-gray-900 dark:text-white min-h-screen">
-        {/* Scroll progress indicator */}
-        <motion.div
-          className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-secondary-500 z-50 origin-left"
-          style={{ scaleX }}
-        />
-        
-        <ScrollToTop />
-        <Navbar />
-        <Hero />
-        <Stats />
-        <Features />
-        <Pricing />
-        <Testimonials />
-        <WaitlistForm />
-        <Footer />
-      </div>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <div className="bg-background-light dark:bg-background-dark text-gray-900 dark:text-white min-h-screen">
+          <motion.div
+            className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-secondary-500 z-50 origin-left"
+            style={{ scaleX }}
+          />
+          
+          <ScrollToTop />
+          
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginForm />} />
+            <Route path="/register" element={<RegisterForm />} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <DashboardOverview />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 
