@@ -1,9 +1,26 @@
 import { Feature, NavItem, PricingPlan, Testimonial } from "../types";
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Features", href: "#features" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Testimonials", href: "#testimonials" },
+  { 
+    label: "Smart Reminders", 
+    href: "#features",
+    description: "Automated invoice reminders that adapt to client behavior"
+  },
+  { 
+    label: "Payment Tracking", 
+    href: "#features",
+    description: "Real-time dashboard for monitoring payment status"
+  },
+  { 
+    label: "Client Management", 
+    href: "#features",
+    description: "Organize and track client payment histories"
+  },
+  { 
+    label: "Analytics", 
+    href: "#features",
+    description: "Insights into payment patterns and cash flow"
+  }
 ];
 
 export const FEATURES: Feature[] = [
