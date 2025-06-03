@@ -54,7 +54,7 @@ const ClientStep: React.FC<ClientStepProps> = ({ data, onUpdate }) => {
       {!showNewClientForm ? (
         <>
           <div className="relative">
-            <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+            <Search className="absolute left-3 top-3 text-gray-400\" size={20} />
             <input
               type="text"
               placeholder="Search clients..."
