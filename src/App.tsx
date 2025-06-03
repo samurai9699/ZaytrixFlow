@@ -58,6 +58,8 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginForm />} />
             <Route path="/register" element={<RegisterForm />} />
+            
+            {/* Dashboard Routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <DashboardLayout>
@@ -65,7 +67,39 @@ function App() {
                 </DashboardLayout>
               </ProtectedRoute>
             } />
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="/dashboard/invoices" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <div className="p-6">
+                    <h1 className="text-2xl font-bold mb-4">Invoices</h1>
+                    <p>Invoice management coming soon!</p>
+                  </div>
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/clients" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <div className="p-6">
+                    <h1 className="text-2xl font-bold mb-4">Clients</h1>
+                    <p>Client management coming soon!</p>
+                  </div>
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/settings" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <div className="p-6">
+                    <h1 className="text-2xl font-bold mb-4">Settings</h1>
+                    <p>Settings configuration coming soon!</p>
+                  </div>
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            
+            {/* Catch all route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </ThemeProvider>
