@@ -16,6 +16,7 @@ import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import DashboardLayout from './components/dashboard/DashboardLayout';
 import DashboardOverview from './components/dashboard/DashboardOverview';
+import InvoiceList from './components/dashboard/invoices/InvoiceList';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 const LandingPage = () => (
@@ -70,10 +71,7 @@ function App() {
             <Route path="/dashboard/invoices" element={
               <ProtectedRoute>
                 <DashboardLayout>
-                  <div className="p-6">
-                    <h1 className="text-2xl font-bold mb-4">Invoices</h1>
-                    <p>Invoice management coming soon!</p>
-                  </div>
+                  <InvoiceList />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
@@ -99,7 +97,7 @@ function App() {
             } />
             
             {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </ThemeProvider>
