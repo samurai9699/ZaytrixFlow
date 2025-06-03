@@ -90,14 +90,14 @@ export const TESTIMONIALS: Testimonial[] = [
     role: "Graphic Designer",
     company: "Freelance",
     image: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150",
-    quote: "InvoiceFlow has completely transformed how I handle client payments. I've reduced my late payments by 75% and saved hours of awkward follow-up conversations.",
+    quote: "ZaytrixFlow has completely transformed how I handle client payments. I've reduced my late payments by 75% and saved hours of awkward follow-up conversations.",
   },
   {
     name: "Marcus Chen",
     role: "Web Developer",
     company: "CodeCraft Studios",
     image: "https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=150",
-    quote: "As someone who hates the administrative side of freelancing, InvoiceFlow has been a game-changer. My cash flow has never been more consistent.",
+    quote: "As someone who hates the administrative side of freelancing, ZaytrixFlow has been a game-changer. My cash flow has never been more consistent.",
   },
   {
     name: "Amelia Rodriguez",
