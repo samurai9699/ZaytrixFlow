@@ -64,7 +64,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
               animate={{ opacity: isCollapsed ? 0 : 1 }}
               className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent"
             >
-              {!isCollapsed && 'InvoiceFlow'}
+              {!isCollapsed && 'ZaytrixFlow'}
             </motion.div>
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
@@ -112,7 +112,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
             >
               <div className="p-4 flex items-center justify-between">
                 <div className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent">
-                  InvoiceFlow
+                  ZaytrixFlow
                 </div>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
