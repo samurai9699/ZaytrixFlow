@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { CreditCard, PaypalIcon, ArrowLeft, Check } from 'lucide-react';
+import { CreditCard, GoalIcon as PaypalIcon, ArrowLeft, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 const PRICING_PLANS = {
