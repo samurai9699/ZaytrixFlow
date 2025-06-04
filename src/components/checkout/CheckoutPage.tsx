@@ -51,7 +51,15 @@ const CheckoutPage: React.FC = () => {
 
   const handlePayPalClick = async () => {
     setLoading(true);
-    window.location.href = 'https://www.paypal.com/agreements/approve?ba_token=BA-5JU79209NR727303P';
+    try {
+      const paypalUrl = 'https://www.paypal.com/agreements/approve?ba_token=BA-5JU79209NR727303P';
+      window.open(paypalUrl, '_blank', 'noopener,noreferrer');
+      toast.success('Redirecting to PayPal...');
+    } catch (error) {
+      toast.error('Failed to connect to PayPal. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBackClick = (e: React.MouseEvent) => {
