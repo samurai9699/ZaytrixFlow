@@ -3,6 +3,7 @@ import { motion, useScroll, useSpring } from 'framer-motion';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { Toaster } from 'sonner';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Stats from './components/Stats';
@@ -14,6 +15,7 @@ import Footer from './components/Footer';
 import ScrollToTop from './utils/ScrollToTop';
 import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
+import CheckoutPage from './components/checkout/CheckoutPage';
 import DashboardLayout from './components/dashboard/DashboardLayout';
 import DashboardOverview from './components/dashboard/DashboardOverview';
 import InvoiceList from './components/dashboard/invoices/InvoiceList';
@@ -48,6 +50,7 @@ function App() {
     <AuthProvider>
       <ThemeProvider>
         <div className="bg-background-light dark:bg-background-dark text-gray-900 dark:text-white min-h-screen">
+          <Toaster position="top-right" />
           <motion.div
             className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-secondary-500 z-50 origin-left"
             style={{ scaleX }}
@@ -59,6 +62,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginForm />} />
             <Route path="/register" element={<RegisterForm />} />
+            <Route path="/checkout/:planId" element={<CheckoutPage />} />
             
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={
@@ -97,7 +101,7 @@ function App() {
             } />
             
             {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </ThemeProvider>

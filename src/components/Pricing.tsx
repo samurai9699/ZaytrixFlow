@@ -1,9 +1,59 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
-import { PRICING_PLANS } from '../constants';
+import { Check, CreditCard } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+const PRICING_PLANS = [
+  {
+    id: 'free',
+    title: "Starter",
+    price: { monthly: 0, annual: 0 },
+    description: "Perfect for freelancers just getting started",
+    features: [
+      "Up to 5 clients",
+      "3 invoice templates",
+      "Basic reminder schedule",
+      "Email support",
+    ],
+    cta: "Get Started",
+  },
+  {
+    id: 'pro',
+    title: "Pro",
+    price: { monthly: 8, annual: 100 },
+    description: "Everything you need for growing your business",
+    features: [
+      "Up to 20 clients",
+      "10 invoice templates",
+      "Advanced reminder schedule",
+      "Payment tracking dashboard",
+      "Client payment history",
+      "Priority email support",
+    ],
+    cta: "Start Free Trial",
+    popular: true,
+  },
+  {
+    id: 'premium',
+    title: "Premium",
+    price: { monthly: 15, annual: 150 },
+    description: "For established freelancers with complex needs",
+    features: [
+      "Unlimited clients",
+      "Custom invoice templates",
+      "AI-powered reminder optimization",
+      "Advanced analytics dashboard",
+      "Client portal access",
+      "Priority phone support",
+      "White-labeling options",
+    ],
+    cta: "Start Free Trial",
+  },
+];
 
 const Pricing: React.FC = () => {
+  const [isAnnual, setIsAnnual] = useState(false);
+
   return (
     <section id="pricing" className="py-16 md:py-24 bg-primary-50 dark:bg-gray-900 relative">
       {/* Decorative elements */}
@@ -21,7 +71,7 @@ const Pricing: React.FC = () => {
             Simple, Transparent Pricing
           </motion.h2>
           <motion.p 
-            className="text-xl text-gray-600 dark:text-gray-300"
+            className="text-xl text-gray-600 dark:text-gray-300 mb-8"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -29,12 +79,35 @@ const Pricing: React.FC = () => {
           >
             Choose the plan that's right for your freelance business
           </motion.p>
+
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-sm text-gray-600 dark:text-gray-400">Monthly</span>
+            <button
+              onClick={() => setIsAnnual(!isAnnual)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none ${
+                isAnnual ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${
+                  isAnnual ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Annual
+              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400">
+                Save 20%
+              </span>
+            </span>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {PRICING_PLANS.map((plan, index) => (
             <motion.div
-              key={index}
+              key={plan.id}
               className={`relative rounded-2xl overflow-hidden transition-all duration-300 
                 ${plan.popular 
                   ? 'bg-white dark:bg-gray-800 border-2 border-primary-500 dark:border-primary-400 shadow-xl md:-mt-4 md:mb-4' 
@@ -59,8 +132,14 @@ const Pricing: React.FC = () => {
               <div className="p-8">
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{plan.title}</h3>
                 <div className="flex items-baseline mb-4">
-                  <span className="text-4xl font-bold text-gray-900 dark:text-white">{plan.price}</span>
-                  {plan.price !== "Free" && <span className="text-gray-500 dark:text-gray-400 ml-2">/month</span>}
+                  <span className="text-4xl font-bold text-gray-900 dark:text-white">
+                    ${isAnnual ? plan.price.annual : plan.price.monthly}
+                  </span>
+                  {plan.price.monthly !== 0 && (
+                    <span className="text-gray-500 dark:text-gray-400 ml-2">
+                      /{isAnnual ? 'year' : 'month'}
+                    </span>
+                  )}
                 </div>
                 <p className="text-gray-600 dark:text-gray-300 mb-6">{plan.description}</p>
                 
@@ -75,22 +154,15 @@ const Pricing: React.FC = () => {
                   ))}
                 </ul>
                 
-                <motion.a
-                  href="#waitlist"
+                <Link
+                  to={plan.price.monthly === 0 ? "/register" : `/checkout/${plan.id}?billing=${isAnnual ? 'annual' : 'monthly'}`}
                   className={`block w-full py-3 px-6 text-center rounded-lg transition-all 
                     ${plan.popular 
                       ? 'bg-gradient-to-r from-primary-600 to-secondary-500 text-white shadow-lg hover:shadow-primary-500/20' 
                       : 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 hover:bg-primary-50 dark:hover:bg-primary-900/20'}`}
-                  whileHover={{ 
-                    scale: 1.03,
-                    boxShadow: plan.popular 
-                      ? '0 10px 25px -5px rgba(99, 102, 241, 0.4), 0 8px 10px -6px rgba(99, 102, 241, 0.1)' 
-                      : '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)'
-                  }}
-                  whileTap={{ scale: 0.97 }}
                 >
                   {plan.cta}
-                </motion.a>
+                </Link>
               </div>
             </motion.div>
           ))}
