@@ -56,11 +56,16 @@ const CheckoutPage: React.FC = () => {
     window.location.href = 'https://www.paypal.com';
   };
 
+  const handleBackClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate('/pricing');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <button
-          onClick={() => navigate('/pricing')}
+          onClick={handleBackClick}
           className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white mb-8"
         >
           <ArrowLeft size={20} className="mr-2" />
