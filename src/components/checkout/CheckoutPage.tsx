@@ -32,7 +32,7 @@ const CheckoutPage: React.FC = () => {
   });
 
   if (!plan) {
-    navigate('/pricing');
+    navigate('/');
     return null;
   }
 
@@ -58,7 +58,7 @@ const CheckoutPage: React.FC = () => {
 
   const handleBackClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    navigate('/pricing');
+    navigate('/#pricing', { replace: true });
   };
 
   return (
