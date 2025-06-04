@@ -51,9 +51,7 @@ const CheckoutPage: React.FC = () => {
 
   const handlePayPalClick = async () => {
     setLoading(true);
-    // Simulate PayPal redirect
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    window.location.href = 'https://www.paypal.com';
+    window.location.href = 'https://www.paypal.com/agreements/approve?ba_token=BA-5JU79209NR727303P';
   };
 
   const handleBackClick = (e: React.MouseEvent) => {
