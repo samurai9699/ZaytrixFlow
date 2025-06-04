@@ -42,7 +42,7 @@ const Navbar: React.FC = () => {
               whileTap={{ scale: 0.95 }}
             >
               <span className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent dark:from-primary-400 dark:to-secondary-300">
-                InvoiceFlow
+                ZaytrixFlow
               </span>
             </motion.a>
           </div>
