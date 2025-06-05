@@ -22,7 +22,8 @@ const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  // Get the redirect path from location state, default to dashboard
+  const from = location.state?.from || '/dashboard';
 
   const validateForm = () => {
     try {
@@ -50,6 +51,7 @@ const LoginForm: React.FC = () => {
     try {
       setIsLoading(true);
       await login(email, password);
+      // Use navigate with replace to avoid the security error
       navigate(from, { replace: true });
     } catch (error) {
       console.error('Login error:', error);

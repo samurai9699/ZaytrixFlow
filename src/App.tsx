@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { Toaster } from 'sonner';
@@ -95,6 +95,23 @@ function App() {
               </PageTransition>
             } />
             
+            {/* Protected Dashboard Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <DashboardOverview />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/dashboard/invoices" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <InvoiceList />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            
             {/* Footer Pages */}
             <Route path="/about" element={
               <PageTransition>
@@ -168,8 +185,17 @@ function App() {
               </PageTransition>
             } />
             
-            {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            {/* Checkout Routes */}
+            <Route path="/checkout/:planId" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <CheckoutPage />
+                </Suspense>
+              </PageTransition>
+            } />
+            
+            {/* Fallback route */}
+            <Route path="*" element={<LandingPage />} />
           </Routes>
         </div>
       </ThemeProvider>
