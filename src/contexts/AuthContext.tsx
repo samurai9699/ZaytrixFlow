@@ -68,7 +68,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        // Check specifically for the user already exists error
+        if (signUpError.message === 'User already registered') {
+          toast.error('An account with this email already exists. Please log in instead.');
+          return;
+        }
+        throw signUpError;
+      }
 
       // Create user profile in users table
       if (data.user) {
@@ -86,8 +93,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       toast.success('Account created successfully!');
-    } catch (error) {
-      toast.error('Failed to create account');
+    } catch (error: any) {
+      // Handle any other errors that might occur
+      if (error.message === 'User already registered') {
+        toast.error('An account with this email already exists. Please log in instead.');
+      } else {
+        toast.error('Failed to create account. Please try again.');
+      }
       throw error;
     } finally {
       setLoading(false);
