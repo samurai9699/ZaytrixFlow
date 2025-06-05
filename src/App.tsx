@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { motion, useScroll, useSpring } from 'framer-motion';
+import React, { Suspense } from 'react';
+import { motion } from 'framer-motion';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -12,22 +12,27 @@ import Testimonials from './components/Testimonials';
 import WaitlistForm from './components/WaitlistForm';
 import Footer from './components/Footer';
 import ScrollToTop from './utils/ScrollToTop';
-import LoginForm from './components/auth/LoginForm';
-import RegisterForm from './components/auth/RegisterForm';
-import CheckoutPage from './components/checkout/CheckoutPage';
-import DashboardLayout from './components/dashboard/DashboardLayout';
-import DashboardOverview from './components/dashboard/DashboardOverview';
-import InvoiceList from './components/dashboard/invoices/InvoiceList';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import AboutPage from './components/pages/AboutPage';
-import BlogPage from './components/pages/BlogPage';
-import RoadmapPage from './components/pages/RoadmapPage';
-import IntegrationsPage from './components/pages/IntegrationsPage';
-import CareersPage from './components/pages/CareersPage';
-import HelpCenterPage from './components/pages/HelpCenterPage';
-import ContactPage from './components/pages/ContactPage';
-import PrivacyPolicyPage from './components/pages/PrivacyPolicyPage';
-import TermsPage from './components/pages/TermsPage';
+import LoadingSpinner from './components/common/LoadingSpinner';
+
+// Lazy load pages
+const LoginForm = React.lazy(() => import('./components/auth/LoginForm'));
+const RegisterForm = React.lazy(() => import('./components/auth/RegisterForm'));
+const CheckoutPage = React.lazy(() => import('./components/checkout/CheckoutPage'));
+const DashboardLayout = React.lazy(() => import('./components/dashboard/DashboardLayout'));
+const DashboardOverview = React.lazy(() => import('./components/dashboard/DashboardOverview'));
+const InvoiceList = React.lazy(() => import('./components/dashboard/invoices/InvoiceList'));
+const ProtectedRoute = React.lazy(() => import('./components/auth/ProtectedRoute'));
+
+// Lazy load footer pages
+const AboutPage = React.lazy(() => import('./components/pages/AboutPage'));
+const BlogPage = React.lazy(() => import('./components/pages/BlogPage'));
+const RoadmapPage = React.lazy(() => import('./components/pages/RoadmapPage'));
+const IntegrationsPage = React.lazy(() => import('./components/pages/IntegrationsPage'));
+const CareersPage = React.lazy(() => import('./components/pages/CareersPage'));
+const HelpCenterPage = React.lazy(() => import('./components/pages/HelpCenterPage'));
+const ContactPage = React.lazy(() => import('./components/pages/ContactPage'));
+const PrivacyPolicyPage = React.lazy(() => import('./components/pages/PrivacyPolicyPage'));
+const TermsPage = React.lazy(() => import('./components/pages/TermsPage'));
 
 const LandingPage = () => (
   <>
@@ -42,17 +47,6 @@ const LandingPage = () => (
 );
 
 function App() {
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
-  });
-
-  useEffect(() => {
-    document.title = "ZaytrixFlow | Get Paid On Time, Every Time";
-  }, []);
-
   return (
     <AuthProvider>
       <ThemeProvider>
@@ -60,66 +54,99 @@ function App() {
           <Toaster position="top-right" />
           <motion.div
             className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-secondary-500 z-50 origin-left"
-            style={{ scaleX }}
           />
           
           <ScrollToTop />
           
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginForm />} />
-            <Route path="/register" element={<RegisterForm />} />
-            <Route path="/checkout/:planId" element={<CheckoutPage />} />
+            
+            {/* Auth Routes */}
+            <Route path="/login" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <LoginForm />
+              </Suspense>
+            } />
+            <Route path="/register" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <RegisterForm />
+              </Suspense>
+            } />
+            <Route path="/checkout/:planId" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <CheckoutPage />
+              </Suspense>
+            } />
             
             {/* Footer Pages */}
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/blog" element={<BlogPage />} />
-            <Route path="/roadmap" element={<RoadmapPage />} />
-            <Route path="/integrations" element={<IntegrationsPage />} />
-            <Route path="/careers" element={<CareersPage />} />
-            <Route path="/help" element={<HelpCenterPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/about" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <AboutPage />
+              </Suspense>
+            } />
+            <Route path="/blog" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <BlogPage />
+              </Suspense>
+            } />
+            <Route path="/roadmap" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <RoadmapPage />
+              </Suspense>
+            } />
+            <Route path="/integrations" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <IntegrationsPage />
+              </Suspense>
+            } />
+            <Route path="/careers" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <CareersPage />
+              </Suspense>
+            } />
+            <Route path="/help" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <HelpCenterPage />
+              </Suspense>
+            } />
+            <Route path="/contact" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <ContactPage />
+              </Suspense>
+            } />
+            <Route path="/privacy" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <PrivacyPolicyPage />
+              </Suspense>
+            } />
+            <Route path="/terms" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <TermsPage />
+              </Suspense>
+            } />
             
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <DashboardOverview />
-                </DashboardLayout>
-              </ProtectedRoute>
+              <Suspense fallback={<LoadingSpinner />}>
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <DashboardOverview />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              </Suspense>
             } />
             <Route path="/dashboard/invoices" element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <InvoiceList />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/clients" element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <div className="p-6">
-                    <h1 className="text-2xl font-bold mb-4">Clients</h1>
-                    <p>Client management coming soon!</p>
-                  </div>
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/settings" element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <div className="p-6">
-                    <h1 className="text-2xl font-bold mb-4">Settings</h1>
-                    <p>Settings configuration coming soon!</p>
-                  </div>
-                </DashboardLayout>
-              </ProtectedRoute>
+              <Suspense fallback={<LoadingSpinner />}>
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <InvoiceList />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              </Suspense>
             } />
             
             {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </ThemeProvider>
