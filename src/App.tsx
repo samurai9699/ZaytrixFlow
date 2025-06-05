@@ -4,7 +4,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { Toaster } from 'sonner';
-import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Stats from './components/Stats';
 import Features from './components/Features';
@@ -20,10 +19,13 @@ import DashboardLayout from './components/dashboard/DashboardLayout';
 import DashboardOverview from './components/dashboard/DashboardOverview';
 import InvoiceList from './components/dashboard/invoices/InvoiceList';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AboutPage from './components/pages/AboutPage';
+import BlogPage from './components/pages/BlogPage';
+import RoadmapPage from './components/pages/RoadmapPage';
+import IntegrationsPage from './components/pages/IntegrationsPage';
 
 const LandingPage = () => (
   <>
-    <Navbar />
     <Hero />
     <Stats />
     <Features />
@@ -64,6 +66,12 @@ function App() {
             <Route path="/register" element={<RegisterForm />} />
             <Route path="/checkout/:planId" element={<CheckoutPage />} />
             
+            {/* Footer Pages */}
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/roadmap" element={<RoadmapPage />} />
+            <Route path="/integrations" element={<IntegrationsPage />} />
+            
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
@@ -101,7 +109,7 @@ function App() {
             } />
             
             {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </ThemeProvider>
