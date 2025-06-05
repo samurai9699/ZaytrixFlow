@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
-import { useSignIn } from '@clerk/clerk-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import AuthLayout from './AuthLayout';
-import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -18,7 +17,8 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const { isLoading, signIn, signInWithOAuth } = useSignIn();
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -48,35 +48,13 @@ const LoginForm: React.FC = () => {
     if (!validateForm()) return;
 
     try {
-      const result = await signIn.create({
-        identifier: email,
-        password,
-      });
-
-      if (result.status === 'complete') {
-        // Update last_login in Supabase
-        await supabase
-          .from('users')
-          .update({ last_login: new Date().toISOString() })
-          .eq('email', email);
-
-        toast.success('Welcome back!');
-        navigate(from, { replace: true });
-      }
+      setIsLoading(true);
+      await login(email, password);
+      navigate(from, { replace: true });
     } catch (error) {
-      toast.error('Invalid credentials');
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await signInWithOAuth({
-        strategy: 'oauth_google',
-        redirectUrl: '/dashboard',
-        redirectUrlComplete: '/dashboard',
-      });
-    } catch (error) {
-      toast.error('Failed to sign in with Google');
+      console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -88,7 +66,7 @@ const LoginForm: React.FC = () => {
       <div className="p-6 sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Email address
             </label>
             <div className="mt-1 relative">
@@ -115,7 +93,7 @@ const LoginForm: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Password
             </label>
             <div className="mt-1 relative">
@@ -192,26 +170,6 @@ const LoginForm: React.FC = () => {
             ) : (
               'Sign in'
             )}
-          </motion.button>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          <motion.button
-            type="button"
-            onClick={handleGoogleSignIn}
-            className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium border border-gray-300 dark:border-gray-600 flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
-            Continue with Google
           </motion.button>
 
           <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">

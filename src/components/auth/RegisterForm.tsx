@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
-import { useSignUp } from '@clerk/clerk-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import AuthLayout from './AuthLayout';
-import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -20,7 +19,8 @@ const RegisterForm: React.FC = () => {
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const { isLoading, signUp, signUpWithOAuth } = useSignUp();
+  const [isLoading, setIsLoading] = useState(false);
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -47,40 +47,13 @@ const RegisterForm: React.FC = () => {
     if (!validateForm()) return;
 
     try {
-      const result = await signUp.create({
-        emailAddress: email,
-        password,
-        firstName: name.split(' ')[0],
-        lastName: name.split(' ').slice(1).join(' '),
-      });
-
-      if (result.status === 'complete') {
-        // Create user record in Supabase
-        await supabase.from('users').insert([
-          {
-            id: result.createdUserId,
-            email,
-            metadata: { name }
-          }
-        ]);
-
-        toast.success('Account created successfully!');
-        navigate('/dashboard');
-      }
+      setIsLoading(true);
+      await register(email, password, name);
+      navigate('/dashboard');
     } catch (error) {
-      toast.error('Failed to create account');
-    }
-  };
-
-  const handleGoogleSignUp = async () => {
-    try {
-      await signUpWithOAuth({
-        strategy: 'oauth_google',
-        redirectUrl: '/dashboard',
-        redirectUrlComplete: '/dashboard',
-      });
-    } catch (error) {
-      toast.error('Failed to sign up with Google');
+      console.error('Registration error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -92,7 +65,7 @@ const RegisterForm: React.FC = () => {
       <div className="p-6 sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Full Name
             </label>
             <div className="mt-1 relative">
@@ -119,7 +92,7 @@ const RegisterForm: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Email address
             </label>
             <div className="mt-1 relative">
@@ -146,7 +119,7 @@ const RegisterForm: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Password
             </label>
             <div className="mt-1 relative">
@@ -178,9 +151,6 @@ const RegisterForm: React.FC = () => {
             )}
           </div>
 
-          {/* Add the Clerk CAPTCHA element */}
-          <div id="clerk-captcha" className="mt-4"></div>
-
           <motion.button
             type="submit"
             disabled={isLoading}
@@ -207,26 +177,6 @@ const RegisterForm: React.FC = () => {
             ) : (
               'Create Account'
             )}
-          </motion.button>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          <motion.button
-            type="button"
-            onClick={handleGoogleSignUp}
-            className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium border border-gray-300 dark:border-gray-600 flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
-            Continue with Google
           </motion.button>
 
           <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
