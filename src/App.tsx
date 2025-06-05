@@ -87,6 +87,14 @@ function App() {
               </PageTransition>
             } />
             
+            <Route path="/register" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <RegisterForm />
+                </Suspense>
+              </PageTransition>
+            } />
+            
             {/* Footer Pages */}
             <Route path="/about" element={
               <PageTransition>
@@ -95,6 +103,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
+            
             <Route path="/blog" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -102,6 +111,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
+            
             <Route path="/roadmap" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -109,6 +119,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
+            
             <Route path="/integrations" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -116,6 +127,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
+            
             <Route path="/careers" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -123,6 +135,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
+            
             <Route path="/help" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -130,6 +143,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
+            
             <Route path="/contact" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -137,6 +151,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
+            
             <Route path="/privacy" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -144,6 +159,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
+            
             <Route path="/terms" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -153,7 +169,7 @@ function App() {
             } />
             
             {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </ThemeProvider>
