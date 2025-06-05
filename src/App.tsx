@@ -23,6 +23,11 @@ import AboutPage from './components/pages/AboutPage';
 import BlogPage from './components/pages/BlogPage';
 import RoadmapPage from './components/pages/RoadmapPage';
 import IntegrationsPage from './components/pages/IntegrationsPage';
+import CareersPage from './components/pages/CareersPage';
+import HelpCenterPage from './components/pages/HelpCenterPage';
+import ContactPage from './components/pages/ContactPage';
+import PrivacyPolicyPage from './components/pages/PrivacyPolicyPage';
+import TermsPage from './components/pages/TermsPage';
 
 const LandingPage = () => (
   <>
@@ -71,6 +76,11 @@ function App() {
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/roadmap" element={<RoadmapPage />} />
             <Route path="/integrations" element={<IntegrationsPage />} />
+            <Route path="/careers" element={<CareersPage />} />
+            <Route path="/help" element={<HelpCenterPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={
@@ -109,7 +119,7 @@ function App() {
             } />
             
             {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </ThemeProvider>
