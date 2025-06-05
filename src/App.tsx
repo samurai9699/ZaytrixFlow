@@ -43,7 +43,7 @@ function App() {
   });
 
   useEffect(() => {
-    document.title = "InvoiceFlow | Get Paid On Time, Every Time";
+    document.title = "ZaytrixFlow | Get Paid On Time, Every Time";
   }, []);
 
   return (
@@ -101,7 +101,7 @@ function App() {
             } />
             
             {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </ThemeProvider>
