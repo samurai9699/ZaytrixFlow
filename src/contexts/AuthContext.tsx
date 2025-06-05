@@ -74,12 +74,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      // First check if user exists
-      const { data: existingUser } = await supabase
+      // First check if user exists - using maybeSingle() instead of single()
+      const { data: existingUser, error: checkError } = await supabase
         .from('users')
         .select('id')
         .eq('email', email)
-        .single();
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking for existing user:', checkError);
+        toast.error('An error occurred. Please try again.');
+        return;
+      }
 
       if (existingUser) {
         toast.error('An account with this email already exists. Please log in instead.');
