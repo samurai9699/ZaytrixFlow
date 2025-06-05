@@ -36,24 +36,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message === 'Invalid login credentials') {
+          toast.error('Invalid email or password. Please try again.');
+        } else {
+          toast.error('Failed to log in. Please try again.');
+        }
+        throw error;
+      }
 
       // Update last_login in users table
-      if (user) {
-        await supabase
+      if (data.user) {
+        const { error: updateError } = await supabase
           .from('users')
           .update({ last_login: new Date().toISOString() })
-          .eq('id', user.id);
+          .eq('id', data.user.id);
+
+        if (updateError) {
+          console.error('Failed to update last login:', updateError);
+        }
       }
 
       toast.success('Welcome back!');
     } catch (error) {
-      toast.error('Invalid email or password');
       throw error;
     } finally {
       setLoading(false);
@@ -63,13 +73,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string, name: string) => {
     try {
       setLoading(true);
+      
+      // First check if user exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (existingUser) {
+        toast.error('An account with this email already exists. Please log in instead.');
+        return;
+      }
+
+      // Create auth user
       const { error: signUpError, data } = await supabase.auth.signUp({
         email,
         password,
       });
 
       if (signUpError) {
-        // Check specifically for the user already exists error
         if (signUpError.message === 'User already registered') {
           toast.error('An account with this email already exists. Please log in instead.');
           return;
@@ -89,16 +112,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           ]);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          // If profile creation fails, we should delete the auth user
+          await supabase.auth.admin.deleteUser(data.user.id);
+          throw profileError;
+        }
       }
 
-      toast.success('Account created successfully!');
+      toast.success('Account created successfully! Please check your email to verify your account.');
     } catch (error: any) {
-      // Handle any other errors that might occur
       if (error.message === 'User already registered') {
         toast.error('An account with this email already exists. Please log in instead.');
       } else {
         toast.error('Failed to create account. Please try again.');
+        console.error('Registration error:', error);
       }
       throw error;
     } finally {
