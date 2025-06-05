@@ -87,10 +87,73 @@ function App() {
               </PageTransition>
             } />
             
-            {/* Other routes... */}
+            {/* Footer Pages */}
+            <Route path="/about" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <AboutPage />
+                </Suspense>
+              </PageTransition>
+            } />
+            <Route path="/blog" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <BlogPage />
+                </Suspense>
+              </PageTransition>
+            } />
+            <Route path="/roadmap" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <RoadmapPage />
+                </Suspense>
+              </PageTransition>
+            } />
+            <Route path="/integrations" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <IntegrationsPage />
+                </Suspense>
+              </PageTransition>
+            } />
+            <Route path="/careers" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <CareersPage />
+                </Suspense>
+              </PageTransition>
+            } />
+            <Route path="/help" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <HelpCenterPage />
+                </Suspense>
+              </PageTransition>
+            } />
+            <Route path="/contact" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ContactPage />
+                </Suspense>
+              </PageTransition>
+            } />
+            <Route path="/privacy" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <PrivacyPolicyPage />
+                </Suspense>
+              </PageTransition>
+            } />
+            <Route path="/terms" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <TermsPage />
+                </Suspense>
+              </PageTransition>
+            } />
             
             {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </ThemeProvider>
