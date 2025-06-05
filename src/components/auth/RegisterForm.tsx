@@ -178,6 +178,9 @@ const RegisterForm: React.FC = () => {
             )}
           </div>
 
+          {/* Add the Clerk CAPTCHA element */}
+          <div id="clerk-captcha" className="mt-4"></div>
+
           <motion.button
             type="submit"
             disabled={isLoading}
