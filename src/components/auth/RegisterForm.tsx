@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { useSignUp } from '@clerk/clerk-react';
+import { Components as ClerkComponents } from '@clerk/clerk-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import AuthLayout from './AuthLayout';
@@ -177,6 +178,8 @@ const RegisterForm: React.FC = () => {
               <p className="mt-1 text-sm text-error-500">{errors.password}</p>
             )}
           </div>
+
+          <ClerkComponents.Captcha />
 
           <motion.button
             type="submit"
