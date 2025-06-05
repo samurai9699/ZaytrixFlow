@@ -67,6 +67,17 @@ const LandingPage = () => (
   </PageTransition>
 );
 
+// Dashboard wrapper component to handle nested Suspense boundaries
+const DashboardWrapper = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<LoadingSpinner />}>
+    <DashboardLayout>
+      <Suspense fallback={<LoadingSpinner />}>
+        {children}
+      </Suspense>
+    </DashboardLayout>
+  </Suspense>
+);
+
 function App() {
   return (
     <AuthProvider>
@@ -97,19 +108,23 @@ function App() {
             
             {/* Protected Dashboard Routes */}
             <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <DashboardOverview />
-                </DashboardLayout>
-              </ProtectedRoute>
+              <Suspense fallback={<LoadingSpinner />}>
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <DashboardOverview />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              </Suspense>
             } />
             
             <Route path="/dashboard/invoices" element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <InvoiceList />
-                </DashboardLayout>
-              </ProtectedRoute>
+              <Suspense fallback={<LoadingSpinner />}>
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <InvoiceList />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              </Suspense>
             } />
             
             {/* Footer Pages */}
