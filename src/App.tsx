@@ -1,11 +1,15 @@
 import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { ClerkProvider } from '@clerk/clerk-react';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { AuthProvider } from './contexts/AuthContext';
 import { Toaster } from 'sonner';
 import ScrollToTop from './utils/ScrollToTop';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import PageTransition from './components/common/PageTransition';
+
+if (!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) {
+  throw new Error('Missing Clerk publishable key');
+}
 
 // Lazy load components with preload
 const preloadComponent = (factory: () => Promise<any>) => {
@@ -69,7 +73,7 @@ const LandingPage = () => (
 
 function App() {
   return (
-    <AuthProvider>
+    <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
       <ThemeProvider>
         <div className="bg-background-light dark:bg-background-dark text-gray-900 dark:text-white min-h-screen">
           <Toaster position="top-right" />
@@ -169,11 +173,11 @@ function App() {
             } />
             
             {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </ThemeProvider>
-    </AuthProvider>
+    </ClerkProvider>
   );
 }
 

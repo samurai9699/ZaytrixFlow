@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, Github } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import AuthLayout from './AuthLayout';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { useSignIn } from '@clerk/clerk-react';
+import { toast } from 'sonner';
 import { z } from 'zod';
+import AuthLayout from './AuthLayout';
+import { supabase } from '../../lib/supabase';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -16,7 +18,7 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const { login, loading } = useAuth();
+  const { isLoading, signIn, signInWithOAuth } = useSignIn();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -46,16 +48,36 @@ const LoginForm: React.FC = () => {
     if (!validateForm()) return;
 
     try {
-      await login(email, password);
-      navigate(from, { replace: true });
+      const result = await signIn.create({
+        identifier: email,
+        password,
+      });
+
+      if (result.status === 'complete') {
+        // Update last_login in Supabase
+        await supabase
+          .from('users')
+          .update({ last_login: new Date().toISOString() })
+          .eq('email', email);
+
+        toast.success('Welcome back!');
+        navigate(from, { replace: true });
+      }
     } catch (error) {
-      // Error is handled by AuthContext
+      toast.error('Invalid credentials');
     }
   };
 
-  const handleGithubLogin = () => {
-    // Simulate GitHub login
-    console.log('GitHub login clicked');
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithOAuth({
+        strategy: 'oauth_google',
+        redirectUrl: '/dashboard',
+        redirectUrlComplete: '/dashboard',
+      });
+    } catch (error) {
+      toast.error('Failed to sign in with Google');
+    }
   };
 
   return (
@@ -146,7 +168,7 @@ const LoginForm: React.FC = () => {
 
           <motion.button
             type="submit"
-            disabled={loading}
+            disabled={isLoading}
             className={`
               w-full px-4 py-3 rounded-lg
               bg-gradient-to-r from-primary-600 to-secondary-500
@@ -159,7 +181,7 @@ const LoginForm: React.FC = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            {loading ? (
+            {isLoading ? (
               <span className="flex items-center justify-center">
                 <motion.span
                   className="h-5 w-5 border-2 border-white border-t-transparent rounded-full inline-block"
@@ -183,13 +205,13 @@ const LoginForm: React.FC = () => {
 
           <motion.button
             type="button"
-            onClick={handleGithubLogin}
-            className="w-full px-4 py-3 rounded-lg bg-gray-900 dark:bg-gray-700 text-white font-medium flex items-center justify-center gap-2 hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors"
+            onClick={handleGoogleSignIn}
+            className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium border border-gray-300 dark:border-gray-600 flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <Github className="h-5 w-5" />
-            Continue with GitHub
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+            Continue with Google
           </motion.button>
 
           <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
