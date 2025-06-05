@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import Navbar from './Navbar';
 
 const Hero: React.FC = () => {
   return (
@@ -8,6 +10,8 @@ const Hero: React.FC = () => {
       id="hero" 
       className="relative min-h-screen pt-20 flex items-center bg-gradient-to-b from-background-light to-white dark:from-background-dark dark:to-gray-900"
     >
+      <Navbar />
+      
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 dark:bg-primary-900 rounded-full opacity-20 blur-3xl"></div>
