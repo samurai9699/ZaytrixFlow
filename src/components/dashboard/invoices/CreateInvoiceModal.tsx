@@ -81,13 +81,37 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
   };
 
   const fetchClients = async () => {
-    // For now, we'll use mock data. In a real app, you'd fetch from a clients table
-    const mockClients: Client[] = [
-      { id: '1', name: 'Acme Corporation', email: 'billing@acme.com', company: 'Acme Corp' },
-      { id: '2', name: 'TechStart Inc', email: 'finance@techstart.com', company: 'TechStart' },
-      { id: '3', name: 'Design Studio', email: 'accounts@designstudio.com', company: 'Design Studio' },
-    ];
-    setClients(mockClients);
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching clients:', error);
+        // Use mock data as fallback
+        const mockClients: Client[] = [
+          { id: '1', name: 'Acme Corporation', email: 'billing@acme.com', company: 'Acme Corp' },
+          { id: '2', name: 'TechStart Inc', email: 'finance@techstart.com', company: 'TechStart' },
+          { id: '3', name: 'Design Studio', email: 'accounts@designstudio.com', company: 'Design Studio' },
+        ];
+        setClients(mockClients);
+      } else {
+        setClients(data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      // Use mock data as fallback
+      const mockClients: Client[] = [
+        { id: '1', name: 'Acme Corporation', email: 'billing@acme.com', company: 'Acme Corp' },
+        { id: '2', name: 'TechStart Inc', email: 'finance@techstart.com', company: 'TechStart' },
+        { id: '3', name: 'Design Studio', email: 'accounts@designstudio.com', company: 'Design Studio' },
+      ];
+      setClients(mockClients);
+    }
   };
 
   const addLineItem = () => {
@@ -134,19 +158,35 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
   const validateForm = () => {
     try {
-      invoiceSchema.parse({
-        client_name: clientName,
-        client_email: clientEmail,
-        invoice_number: invoiceNumber,
+      // Clear previous errors
+      setErrors({});
+
+      // Validate line items have valid data
+      const validLineItems = lineItems.filter(item => 
+        item.description.trim() !== '' && 
+        item.quantity > 0 && 
+        item.rate >= 0
+      );
+
+      if (validLineItems.length === 0) {
+        setErrors({ line_items: 'At least one valid line item is required' });
+        return false;
+      }
+
+      const formData = {
+        client_name: clientName.trim(),
+        client_email: clientEmail.trim(),
+        invoice_number: invoiceNumber.trim(),
         due_date: dueDate,
-        line_items: lineItems.map(item => ({
-          description: item.description,
+        line_items: validLineItems.map(item => ({
+          description: item.description.trim(),
           quantity: item.quantity,
           rate: item.rate,
         })),
         tax_percentage: taxPercentage,
-      });
-      setErrors({});
+      };
+
+      invoiceSchema.parse(formData);
       return true;
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -156,6 +196,12 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
           newErrors[path] = err.message;
         });
         setErrors(newErrors);
+        
+        // Show first error in toast
+        const firstError = Object.values(newErrors)[0];
+        if (firstError) {
+          toast.error(firstError);
+        }
       }
       return false;
     }
@@ -163,39 +209,66 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm() || !user) return;
+    
+    if (!user) {
+      toast.error('You must be logged in to create an invoice');
+      return;
+    }
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       setLoading(true);
 
+      // Prepare line items data
+      const validLineItems = lineItems.filter(item => 
+        item.description.trim() !== '' && 
+        item.quantity > 0 && 
+        item.rate >= 0
+      );
+
       const invoiceData = {
         user_id: user.id,
-        client_name: clientName,
-        client_email: clientEmail,
-        invoice_number: invoiceNumber,
+        client_name: clientName.trim(),
+        client_email: clientEmail.trim(),
+        invoice_number: invoiceNumber.trim(),
         amount: calculateTotal(),
         currency: 'USD',
         status: 'upcoming' as const,
         issue_date: issueDate,
         due_date: dueDate,
-        description: description || null,
-        line_items: lineItems,
+        description: description.trim() || null,
+        line_items: validLineItems,
         tax_percentage: taxPercentage,
       };
 
-      const { error } = await supabase
+      console.log('Creating invoice with data:', invoiceData);
+
+      const { data, error } = await supabase
         .from('invoices')
-        .insert([invoiceData]);
+        .insert([invoiceData])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
+      console.log('Invoice created successfully:', data);
       toast.success('Invoice created successfully!');
       resetForm();
       onSuccess();
     } catch (error: any) {
       console.error('Error creating invoice:', error);
+      
       if (error.code === '23505') {
         toast.error('Invoice number already exists. Please use a different number.');
+        setErrors({ invoice_number: 'Invoice number already exists' });
+      } else if (error.message?.includes('line_items')) {
+        toast.error('Error saving line items. Please check your data and try again.');
       } else {
         toast.error('Failed to create invoice. Please try again.');
       }
@@ -376,6 +449,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
                   Line Items
                 </label>
+                {errors.line_items && (
+                  <p className="mb-4 text-sm text-error-500">{errors.line_items}</p>
+                )}
                 <div className="space-y-4">
                   {lineItems.map((item, index) => (
                     <div key={item.id} className="grid grid-cols-12 gap-4 items-start p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
@@ -496,7 +572,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             <button
               type="button"
               onClick={handleClose}
-              className="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              disabled={loading}
+              className="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
