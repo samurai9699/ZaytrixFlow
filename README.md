@@ -1,14 +1,120 @@
-ZaytrixFlow is an Automated Invoice Reminder & Late-Payment Reporter for Freelancers
+# 💼 ZaytrixFlow
 
-Problem Being Solved
-Freelancers (designers, developers, consultants) frequently face delayed or missed payments because they lack a simple, automated system to send invoice reminders, track overdue bills, and generate FAA (Freelance Accounts Aging) reports. Many still rely on manual spreadsheets or ad-hoc email reminders.
+ZaytrixFlow is an **Automated Invoice Reminder** and **Late-Payment Reporter** built specifically for **freelancers** and **micro-agencies**.
 
-Target Customer Segment
-- Independent freelancers across design/development/consulting
-- Micro agencies with <5 people who send invoices via PayPal or QuickBooks but have no follow-up automation.
-- Agencies in emerging markets where debt collection services are expensive.
-  
-Why People Currently Struggle with This Problem
-- Following up on late payments is socially awkward and time-consuming.
-- Spreadsheets don't send automated reminders or calculate aging reports; freelancers often lose track.
-- Existing accounting software (FreshBooks, QuickBooks) has advanced features but can be expensive ($15-$30 / month) and bloated.
+## 🚨 The Problem
+
+Freelancers lose time and money chasing overdue payments. Manual spreadsheets and disorganized reminders often lead to:
+- Forgotten invoices
+- Awkward client follow-ups
+- Unpredictable cash flow
+
+Popular accounting tools like FreshBooks or QuickBooks are often **too expensive** and **feature-bloated** for simple needs.
+
+---
+
+## ✅ The Solution
+
+ZaytrixFlow automates your freelance billing workflow:
+
+- 🧠 **Smart Invoice Reminders**  
+  Automatically emails clients when payments are due or late.
+
+- 📈 **FAA (Freelance Accounts Aging) Reports**  
+  Visual breakdown of outstanding payments over 30, 60, and 90+ days.
+
+- 🕵️ **Late Payment Tracking**  
+  Keep a history of which clients delay payments — perfect for vetting future work.
+
+- 📊 **Clean Dashboard UI**  
+  Focused, minimalist interface tailored for solo workers.
+
+---
+
+## 🧑‍💻 Ideal Users
+
+- Freelancers (Designers, Developers, Consultants)
+- Tiny agencies (less than 5 people)
+- Remote workers in emerging markets where debt collection is costly
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js, TailwindCSS  
+- **Backend**: Supabase Edge Functions  
+- **Database**: Supabase PostgreSQL with Row-Level Security (RLS)  
+- **Payments**: Stripe (Subscriptions + One-time purchases)
+
+---
+
+## 💳 Stripe Integration
+
+ZaytrixFlow uses **Stripe Checkout** to offer secure, global payment handling:
+
+- 🧾 Monthly Plans:
+  - **Pro** – $8/mo: For growing freelancers
+  - **Premium** – $15/mo: For power users needing advanced reporting
+
+- 🔁 Handles:
+  - Subscription lifecycle
+  - One-time payments
+  - Webhook syncing for real-time status updates
+
+- 🛡️ Built with best practices:
+  - JWT-secured endpoints
+  - Webhook signature verification
+  - Supabase RLS for secure data access
+
+---
+
+## 🔐 Supabase Integration
+
+- 🔄 Real-time database syncing of Stripe events
+- 🔐 Row-Level Security isolates user data
+- 🔗 Stripe-Supabase mapping via custom tables:
+  - `stripe_customers`
+  - `stripe_subscriptions`
+  - `stripe_orders`
+
+- ✅ Functions:
+  - `/stripe-checkout` – Creates checkout sessions with Stripe
+  - `/stripe-webhook` – Handles Stripe events securely
+
+---
+
+## 🚀 User Flow
+
+1. User signs up and selects a plan
+2. Redirected to secure Stripe Checkout
+3. On success:
+   - Supabase stores and syncs payment data
+   - Dashboard shows subscription status with 👑 crown badge
+4. App unlocks full features based on plan
+
+---
+
+## 🧪 Testing
+
+- Stripe Test Mode supported
+- Use test cards like `4242 4242 4242 4242`
+- Supabase logs show real-time webhook + session activity
+
+---
+
+## 📅 Coming Soon
+
+- Invoicing Templates
+- Custom Reminder Schedules
+- Integration with PayPal & QuickBooks
+- Stripe Smart Retries for failed payments
+
+---
+
+
+
+## 📬 Contact
+
+For questions or feedback, contact **Sam Muriithi Wangui** at `samuelmuriithi965@gmail.com`
+
+---
