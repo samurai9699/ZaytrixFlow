@@ -35,6 +35,8 @@ const CheckoutCancelPage = React.lazy(() => import('./components/checkout/Checko
 const DashboardLayout = React.lazy(() => import('./components/dashboard/DashboardLayout'));
 const DashboardOverview = React.lazy(() => import('./components/dashboard/DashboardOverview'));
 const InvoiceList = React.lazy(() => import('./components/dashboard/invoices/InvoiceList'));
+const ReminderDashboard = React.lazy(() => import('./components/dashboard/reminders/ReminderDashboard'));
+const AnalyticsDashboard = React.lazy(() => import('./components/dashboard/analytics/AnalyticsDashboard'));
 const ProtectedRoute = React.lazy(() => import('./components/auth/ProtectedRoute'));
 
 // Lazy load footer pages
@@ -124,6 +126,26 @@ function App() {
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <InvoiceList />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              </Suspense>
+            } />
+
+            <Route path="/dashboard/reminders" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <ReminderDashboard />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              </Suspense>
+            } />
+
+            <Route path="/dashboard/analytics" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <AnalyticsDashboard />
                   </DashboardWrapper>
                 </ProtectedRoute>
               </Suspense>

@@ -13,7 +13,10 @@ import {
   Menu,
   X,
   User,
-  Crown
+  Crown,
+  BarChart3,
+  BellRing,
+  Zap
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -25,12 +28,15 @@ interface SidebarItem {
   icon: React.ReactNode;
   label: string;
   path: string;
+  badge?: string;
 }
 
 const sidebarItems: SidebarItem[] = [
   { icon: <Home size={20} />, label: 'Dashboard', path: '/dashboard' },
   { icon: <FileText size={20} />, label: 'Invoices', path: '/dashboard/invoices' },
   { icon: <Users size={20} />, label: 'Clients', path: '/dashboard/clients' },
+  { icon: <BellRing size={20} />, label: 'Reminders', path: '/dashboard/reminders', badge: '3' },
+  { icon: <BarChart3 size={20} />, label: 'Analytics', path: '/dashboard/analytics' },
   { icon: <Settings size={20} />, label: 'Settings', path: '/dashboard/settings' },
 ];
 
@@ -39,6 +45,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState(3);
   const { user, logout } = useAuth();
   const location = useLocation();
   const { isDarkMode, toggleTheme } = useTheme();
@@ -81,24 +88,43 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
     }
   };
 
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path === '/dashboard') return 'Dashboard';
+    if (path.includes('/invoices')) return 'Invoices';
+    if (path.includes('/clients')) return 'Clients';
+    if (path.includes('/reminders')) return 'Reminders';
+    if (path.includes('/analytics')) return 'Analytics';
+    if (path.includes('/settings')) return 'Settings';
+    return 'Dashboard';
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Sidebar */}
       <AnimatePresence mode="wait">
         <motion.aside
-          className={`fixed top-0 left-0 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-lg z-30 transition-all duration-300 ${
+          className={`fixed top-0 left-0 h-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-700/50 shadow-xl z-30 transition-all duration-300 ${
             isCollapsed ? 'w-20' : 'w-64'
           } hidden lg:block`}
           initial={false}
           animate={{ width: isCollapsed ? 80 : 256 }}
         >
-          <div className="p-4 flex items-center justify-between">
+          {/* Logo Section */}
+          <div className="p-4 flex items-center justify-between border-b border-gray-200/50 dark:border-gray-700/50">
             <motion.div
               initial={false}
               animate={{ opacity: isCollapsed ? 0 : 1 }}
-              className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent"
+              className="flex items-center gap-2"
             >
-              {!isCollapsed && 'ZaytrixFlow'}
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary-600 to-secondary-500 flex items-center justify-center">
+                <Zap className="h-5 w-5 text-white" />
+              </div>
+              {!isCollapsed && (
+                <span className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent">
+                  ZaytrixFlow
+                </span>
+              )}
             </motion.div>
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
@@ -110,11 +136,11 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
           {/* Subscription Status */}
           {!isCollapsed && subscriptionPlan && (
-            <div className="px-4 mb-4">
+            <div className="px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50">
               <div className={`p-3 rounded-lg ${
                 subscriptionPlan === 'Free' 
                   ? 'bg-gray-100 dark:bg-gray-700' 
-                  : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20'
+                  : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 border border-primary-200/30 dark:border-primary-800/30'
               }`}>
                 <div className="flex items-center gap-2">
                   {subscriptionPlan !== 'Free' && (
@@ -136,21 +162,39 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
             </div>
           )}
 
-          <nav className="mt-4">
-            {sidebarItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                  location.pathname === item.path
-                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                    : ''
-                }`}
-              >
-                <span className="flex-shrink-0">{item.icon}</span>
-                {!isCollapsed && <span className="ml-3">{item.label}</span>}
-              </Link>
-            ))}
+          {/* Navigation */}
+          <nav className="flex-1 p-4">
+            <div className="space-y-2">
+              {sidebarItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex items-center px-3 py-3 rounded-lg transition-all duration-200 group relative ${
+                    location.pathname === item.path
+                      ? 'bg-gradient-to-r from-primary-500/10 to-secondary-500/10 text-primary-600 dark:text-primary-400 shadow-sm'
+                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                  }`}
+                >
+                  <span className="flex-shrink-0">{item.icon}</span>
+                  {!isCollapsed && (
+                    <>
+                      <span className="ml-3 font-medium">{item.label}</span>
+                      {item.badge && (
+                        <span className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                          {item.badge}
+                        </span>
+                      )}
+                    </>
+                  )}
+                  {location.pathname === item.path && (
+                    <motion.div
+                      className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-500 to-secondary-500 rounded-r"
+                      layoutId="activeTab"
+                    />
+                  )}
+                </Link>
+              ))}
+            </div>
           </nav>
         </motion.aside>
       </AnimatePresence>
@@ -170,11 +214,16 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
               initial={{ x: -256 }}
               animate={{ x: 0 }}
               exit={{ x: -256 }}
-              className="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-800 shadow-lg z-50 lg:hidden"
+              className="fixed top-0 left-0 h-full w-64 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl shadow-xl z-50 lg:hidden"
             >
-              <div className="p-4 flex items-center justify-between">
-                <div className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent">
-                  ZaytrixFlow
+              <div className="p-4 flex items-center justify-between border-b border-gray-200/50 dark:border-gray-700/50">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary-600 to-secondary-500 flex items-center justify-center">
+                    <Zap className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent">
+                    ZaytrixFlow
+                  </span>
                 </div>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -186,11 +235,11 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
               {/* Mobile Subscription Status */}
               {subscriptionPlan && (
-                <div className="px-4 mb-4">
+                <div className="px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50">
                   <div className={`p-3 rounded-lg ${
                     subscriptionPlan === 'Free' 
                       ? 'bg-gray-100 dark:bg-gray-700' 
-                      : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20'
+                      : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 border border-primary-200/30 dark:border-primary-800/30'
                   }`}>
                     <div className="flex items-center gap-2">
                       {subscriptionPlan !== 'Free' && (
@@ -213,22 +262,29 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                 </div>
               )}
 
-              <nav className="mt-4">
-                {sidebarItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                      location.pathname === item.path
-                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-                        : ''
-                    }`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <span className="flex-shrink-0">{item.icon}</span>
-                    <span className="ml-3">{item.label}</span>
-                  </Link>
-                ))}
+              <nav className="p-4">
+                <div className="space-y-2">
+                  {sidebarItems.map((item) => (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`flex items-center px-3 py-3 rounded-lg transition-all duration-200 ${
+                        location.pathname === item.path
+                          ? 'bg-gradient-to-r from-primary-500/10 to-secondary-500/10 text-primary-600 dark:text-primary-400'
+                          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <span className="flex-shrink-0">{item.icon}</span>
+                      <span className="ml-3 font-medium">{item.label}</span>
+                      {item.badge && (
+                        <span className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
               </nav>
             </motion.aside>
           </>
@@ -242,9 +298,9 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
         }`}
       >
         {/* Top navigation */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-20">
-          <div className="flex items-center justify-between h-16 px-4">
-            <div className="flex items-center">
+        <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-20">
+          <div className="flex items-center justify-between h-16 px-6">
+            <div className="flex items-center gap-4">
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 lg:hidden"
@@ -252,69 +308,85 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                 <Menu size={20} />
               </button>
 
-              <div className="ml-4">
-                <nav className="flex" aria-label="Breadcrumb">
-                  <ol className="flex items-center space-x-2">
-                    <li>
-                      <Link
-                        to="/dashboard"
-                        className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                      >
-                        Dashboard
-                      </Link>
-                    </li>
-                    <li>
-                      <span className="text-gray-400">/</span>
-                    </li>
-                    <li>
-                      <span className="text-gray-900 dark:text-white font-medium">
-                        Overview
-                      </span>
-                    </li>
-                  </ol>
-                </nav>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {getPageTitle()}
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {new Date().toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
               </div>
             </div>
 
             <div className="flex items-center space-x-4">
-              <div className="relative">
+              <div className="relative hidden md:block">
                 <input
                   type="text"
-                  placeholder="Search..."
-                  className="w-64 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400"
+                  placeholder="Search invoices, clients..."
+                  className="w-64 px-4 py-2 pl-10 rounded-lg bg-gray-100/50 dark:bg-gray-700/50 border border-gray-200/50 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 backdrop-blur-sm"
                 />
-                <Search className="absolute right-3 top-2.5 text-gray-400" size={18} />
+                <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
               </div>
 
-              <button className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <button className="relative p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors">
                 <Bell size={20} />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-primary-500 rounded-full"></span>
+                {notifications > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary-500 text-white text-xs rounded-full flex items-center justify-center">
+                    {notifications}
+                  </span>
+                )}
               </button>
 
               <div className="relative">
                 <button
                   onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                    <User size={20} className="text-primary-600 dark:text-primary-400" />
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center">
+                    <User size={16} className="text-white" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {user?.email}
-                  </span>
+                  <div className="hidden md:block text-left">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      {user?.email?.split('@')[0] || 'User'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {subscriptionPlan} Plan
+                    </p>
+                  </div>
                 </button>
 
                 <AnimatePresence>
                   {isProfileDropdownOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1"
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-2 w-48 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50 py-1"
                     >
+                      <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {user?.email}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {subscriptionPlan} Plan
+                        </p>
+                      </div>
+                      <Link
+                        to="/dashboard/settings"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                      >
+                        <Settings size={16} className="mr-2" />
+                        Settings
+                      </Link>
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
                       >
                         <LogOut size={16} className="mr-2" />
                         Sign out
@@ -328,7 +400,17 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
         </header>
 
         {/* Page content */}
-        <main className="p-6">{children}</main>
+        <main className="p-6">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {children}
+          </motion.div>
+        </main>
       </div>
     </div>
   );
