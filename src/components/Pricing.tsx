@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { STRIPE_PRODUCTS } from '../stripe-config';
 
 const PRICING_PLANS = [
   {
@@ -21,7 +22,7 @@ const PRICING_PLANS = [
     id: 'pro',
     title: "Pro",
     price: { monthly: 8, annual: 100 },
-    description: "Everything you need for growing your business",
+    description: STRIPE_PRODUCTS.pro.description,
     features: [
       "Up to 20 clients",
       "10 invoice templates",
@@ -37,7 +38,7 @@ const PRICING_PLANS = [
     id: 'premium',
     title: "Premium",
     price: { monthly: 15, annual: 150 },
-    description: "For established freelancers with complex needs",
+    description: STRIPE_PRODUCTS.premium.description,
     features: [
       "Unlimited clients",
       "Custom invoice templates",

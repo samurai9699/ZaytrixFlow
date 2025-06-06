@@ -30,6 +30,8 @@ const WaitlistForm = React.lazy(() => import('./components/WaitlistForm'));
 const LoginForm = React.lazy(() => import('./components/auth/LoginForm'));
 const RegisterForm = React.lazy(() => import('./components/auth/RegisterForm'));
 const CheckoutPage = React.lazy(() => import('./components/checkout/CheckoutPage'));
+const CheckoutSuccessPage = React.lazy(() => import('./components/checkout/CheckoutSuccessPage'));
+const CheckoutCancelPage = React.lazy(() => import('./components/checkout/CheckoutCancelPage'));
 const DashboardLayout = React.lazy(() => import('./components/dashboard/DashboardLayout'));
 const DashboardOverview = React.lazy(() => import('./components/dashboard/DashboardOverview'));
 const InvoiceList = React.lazy(() => import('./components/dashboard/invoices/InvoiceList'));
@@ -205,6 +207,22 @@ function App() {
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
                   <CheckoutPage />
+                </Suspense>
+              </PageTransition>
+            } />
+            
+            <Route path="/checkout/success" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <CheckoutSuccessPage />
+                </Suspense>
+              </PageTransition>
+            } />
+            
+            <Route path="/checkout/cancel" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <CheckoutCancelPage />
                 </Suspense>
               </PageTransition>
             } />

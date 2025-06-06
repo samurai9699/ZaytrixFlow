@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { CreditCard, GoalIcon as PaypalIcon, ArrowLeft, Check } from 'lucide-react';
+import { CreditCard, GoalIcon as PaypalIcon, ArrowLeft, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { STRIPE_PRODUCTS } from '../../stripe-config';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 const PRICING_PLANS = {
   pro: {
@@ -19,8 +22,10 @@ const CheckoutPage: React.FC = () => {
   const { planId } = useParams<{ planId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const billingCycle = searchParams.get('billing') || 'monthly';
   const plan = planId ? PRICING_PLANS[planId as keyof typeof PRICING_PLANS] : null;
+  const stripeProduct = planId ? STRIPE_PRODUCTS[planId] : null;
 
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>('card');
   const [loading, setLoading] = useState(false);
@@ -31,22 +36,62 @@ const CheckoutPage: React.FC = () => {
     name: '',
   });
 
-  if (!plan) {
+  if (!plan || !stripeProduct) {
     navigate('/');
     return null;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast.error('Please log in to continue with checkout');
+      navigate('/login');
+      return;
+    }
+
     setLoading(true);
 
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error('Authentication required. Please log in again.');
+        navigate('/login');
+        return;
+      }
 
-    toast.success('Payment successful! Redirecting to dashboard...');
-    setTimeout(() => {
-      navigate('/dashboard');
-    }, 2000);
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          price_id: stripeProduct.priceId,
+          mode: stripeProduct.mode,
+          success_url: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${window.location.origin}/checkout/cancel`,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast.error(error.message || 'Failed to start checkout process');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePayPalClick = async () => {
@@ -214,16 +259,13 @@ const CheckoutPage: React.FC = () => {
                     type="submit"
                     disabled={loading}
                     className="w-full py-3 px-6 rounded-lg bg-gradient-to-r from-primary-600 to-secondary-500 text-white font-medium shadow-lg hover:shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: loading ? 1 : 1.02 }}
+                    whileTap={{ scale: loading ? 1 : 0.98 }}
                   >
                     {loading ? (
                       <span className="flex items-center justify-center">
-                        <motion.span
-                          className="h-5 w-5 border-2 border-white border-t-transparent rounded-full inline-block"
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        />
+                        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                        Processing...
                       </span>
                     ) : (
                       'Complete Purchase'
@@ -235,16 +277,13 @@ const CheckoutPage: React.FC = () => {
                   onClick={handlePayPalClick}
                   disabled={loading}
                   className="w-full py-3 px-6 rounded-lg bg-[#0070BA] text-white font-medium shadow-lg hover:bg-[#003087] disabled:opacity-50 disabled:cursor-not-allowed"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: loading ? 1 : 1.02 }}
+                  whileTap={{ scale: loading ? 1 : 0.98 }}
                 >
                   {loading ? (
                     <span className="flex items-center justify-center">
-                      <motion.span
-                        className="h-5 w-5 border-2 border-white border-t-transparent rounded-full inline-block"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      />
+                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                      Processing...
                     </span>
                   ) : (
                     'Pay with PayPal'

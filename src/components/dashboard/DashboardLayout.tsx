@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronLeft, 
@@ -12,11 +12,14 @@ import {
   LogOut,
   Menu,
   X,
-  User
+  User,
+  Crown
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { supabase } from '../../lib/supabase';
+import { getProductByPriceId } from '../../stripe-config';
 
 interface SidebarItem {
   icon: React.ReactNode;
@@ -35,9 +38,40 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
   const { user, logout } = useAuth();
   const location = useLocation();
   const { isDarkMode, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('stripe_user_subscriptions')
+          .select('price_id, subscription_status')
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching subscription:', error);
+          return;
+        }
+
+        if (data?.price_id && data.subscription_status === 'active') {
+          const product = getProductByPriceId(data.price_id);
+          setSubscriptionPlan(product?.name || 'Unknown Plan');
+        } else {
+          setSubscriptionPlan('Free');
+        }
+      } catch (error) {
+        console.error('Error fetching subscription:', error);
+        setSubscriptionPlan('Free');
+      }
+    };
+
+    fetchSubscription();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -73,6 +107,34 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
               {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
             </button>
           </div>
+
+          {/* Subscription Status */}
+          {!isCollapsed && subscriptionPlan && (
+            <div className="px-4 mb-4">
+              <div className={`p-3 rounded-lg ${
+                subscriptionPlan === 'Free' 
+                  ? 'bg-gray-100 dark:bg-gray-700' 
+                  : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20'
+              }`}>
+                <div className="flex items-center gap-2">
+                  {subscriptionPlan !== 'Free' && (
+                    <Crown className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                  )}
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {subscriptionPlan} Plan
+                  </span>
+                </div>
+                {subscriptionPlan === 'Free' && (
+                  <Link
+                    to="/#pricing"
+                    className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                  >
+                    Upgrade now
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
 
           <nav className="mt-4">
             {sidebarItems.map((item) => (
@@ -121,6 +183,35 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                   <X size={20} />
                 </button>
               </div>
+
+              {/* Mobile Subscription Status */}
+              {subscriptionPlan && (
+                <div className="px-4 mb-4">
+                  <div className={`p-3 rounded-lg ${
+                    subscriptionPlan === 'Free' 
+                      ? 'bg-gray-100 dark:bg-gray-700' 
+                      : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      {subscriptionPlan !== 'Free' && (
+                        <Crown className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                      )}
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {subscriptionPlan} Plan
+                      </span>
+                    </div>
+                    {subscriptionPlan === 'Free' && (
+                      <Link
+                        to="/#pricing"
+                        className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Upgrade now
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <nav className="mt-4">
                 {sidebarItems.map((item) => (
