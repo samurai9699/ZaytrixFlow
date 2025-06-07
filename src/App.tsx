@@ -35,8 +35,10 @@ const CheckoutCancelPage = React.lazy(() => import('./components/checkout/Checko
 const DashboardLayout = React.lazy(() => import('./components/dashboard/DashboardLayout'));
 const DashboardOverview = React.lazy(() => import('./components/dashboard/DashboardOverview'));
 const InvoiceList = React.lazy(() => import('./components/dashboard/invoices/InvoiceList'));
+const ClientList = React.lazy(() => import('./components/dashboard/clients/ClientList'));
 const ReminderDashboard = React.lazy(() => import('./components/dashboard/reminders/ReminderDashboard'));
 const AnalyticsDashboard = React.lazy(() => import('./components/dashboard/analytics/AnalyticsDashboard'));
+const SettingsPage = React.lazy(() => import('./components/dashboard/settings/SettingsPage'));
 const ProtectedRoute = React.lazy(() => import('./components/auth/ProtectedRoute'));
 
 // Lazy load footer pages
@@ -131,6 +133,16 @@ function App() {
               </Suspense>
             } />
 
+            <Route path="/dashboard/clients" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <ClientList />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              </Suspense>
+            } />
+
             <Route path="/dashboard/reminders" element={
               <Suspense fallback={<LoadingSpinner />}>
                 <ProtectedRoute>
@@ -146,6 +158,16 @@ function App() {
                 <ProtectedRoute>
                   <DashboardWrapper>
                     <AnalyticsDashboard />
+                  </DashboardWrapper>
+                </ProtectedRoute>
+              </Suspense>
+            } />
+
+            <Route path="/dashboard/settings" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <ProtectedRoute>
+                  <DashboardWrapper>
+                    <SettingsPage />
                   </DashboardWrapper>
                 </ProtectedRoute>
               </Suspense>
