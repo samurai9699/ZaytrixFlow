@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Bell, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { Bell, Clock, AlertCircle, CheckCircle, ChevronRight } from 'lucide-react';
 
 const MOCK_REMINDERS = [
   {
