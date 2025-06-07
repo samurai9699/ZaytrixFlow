@@ -35,7 +35,7 @@ const sidebarItems: SidebarItem[] = [
   { icon: <Home size={20} />, label: 'Dashboard', path: '/dashboard' },
   { icon: <FileText size={20} />, label: 'Invoices', path: '/dashboard/invoices' },
   { icon: <Users size={20} />, label: 'Clients', path: '/dashboard/clients' },
-  { icon: <BellRing size={20} />, label: 'Reminders', path: '/dashboard/reminders', badge: '' },
+  { icon: <BellRing size={20} />, label: 'Reminders', path: '/dashboard/reminders' },
   { icon: <BarChart3 size={20} />, label: 'Analytics', path: '/dashboard/analytics' },
   { icon: <Settings size={20} />, label: 'Settings', path: '/dashboard/settings' },
 ];
