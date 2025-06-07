@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, Bell, Settings, ChevronRight } from 'lucide-react';
+import { Calendar, Clock, Bell, Settings } from 'lucide-react';
 import ReminderCalendar from './ReminderCalendar';
 import ReminderTimeline from './ReminderTimeline';
 import TemplateEditor from './TemplateEditor';
 import ReminderMetrics from './ReminderMetrics';
+import CreateReminderModal from './CreateReminderModal';
 
 const ReminderDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'calendar' | 'templates' | 'settings'>('calendar');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const handleCreateSuccess = () => {
+    setShowCreateModal(false);
+    // Refresh the reminders data if needed
+  };
 
   return (
     <div className="space-y-6">
@@ -19,9 +26,10 @@ const ReminderDashboard: React.FC = () => {
         
         <div className="flex gap-2">
           <motion.button
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-500 text-white rounded-lg flex items-center gap-2 hover:shadow-lg hover:shadow-primary-500/20 transition-all"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg flex items-center gap-2"
           >
             <Bell size={20} />
             Create Reminder
@@ -85,12 +93,19 @@ const ReminderDashboard: React.FC = () => {
         )}
         
         {activeTab === 'settings' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Reminder Settings</h2>
-            {/* Settings content will go here */}
+            <p className="text-gray-600 dark:text-gray-300">Configure your reminder preferences and notification settings.</p>
           </div>
         )}
       </div>
+
+      {/* Create Reminder Modal */}
+      <CreateReminderModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleCreateSuccess}
+      />
     </div>
   );
 };
