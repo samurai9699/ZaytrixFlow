@@ -35,7 +35,7 @@ const ProfileSettings: React.FC = () => {
         .from('users')
         .select('metadata')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching user profile:', error);

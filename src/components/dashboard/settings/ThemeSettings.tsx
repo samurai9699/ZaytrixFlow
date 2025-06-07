@@ -50,9 +50,9 @@ const ThemeSettings: React.FC = () => {
         .from('user_preferences')
         .select('theme')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching theme preference:', error);
         return;
       }
