@@ -119,14 +119,14 @@ const Hero: React.FC = () => {
           href="https://bolt.new"
           target="_blank"
           rel="noopener noreferrer"
-          className="fixed top-6 right-16 lg:top-8 lg:right-20 z-50"
+          className="fixed top-6 right-16 lg:top-8 lg:right-20 z-100"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
         >
           <img
             src={`/assets/built-on-bolt-${isDarkMode ? 'white' : 'black'}.png`}
             alt="Built on Bolt"
-            className="w-20 h-20 sm:w-24 sm:h-24 object-contain transition-opacity duration-300 hover:opacity-80"
+            className="w-20 h-20 sm:w-24 sm:h-24 md:w-24 md:h-24 lg:w-24 lg:h-24 xl:w-24 xl:h-24 object-contain transition-opacity duration-300 hover:opacity-80"
           />
         </motion.a>
       </div>
