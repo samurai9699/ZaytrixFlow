@@ -2,14 +2,14 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 interface AgingAnalysisProps {
-  data: Array<{
+  data?: Array<{
     range: string;
     amount: number;
     percentage: number;
   }>;
 }
 
-const AgingAnalysis: React.FC<AgingAnalysisProps> = ({ data }) => {
+const AgingAnalysis: React.FC<AgingAnalysisProps> = ({ data = [] }) => {
   const getColor = (index: number) => {
     const colors = [
       'bg-success-500',
@@ -30,6 +30,15 @@ const AgingAnalysis: React.FC<AgingAnalysisProps> = ({ data }) => {
     }).format(value);
   };
 
+  // Provide default data if none is passed
+  const agingData = data.length > 0 ? data : [
+    { range: '0-30', amount: 15000, percentage: 45 },
+    { range: '31-60', amount: 8000, percentage: 24 },
+    { range: '61-90', amount: 5000, percentage: 15 },
+    { range: '91-120', amount: 3000, percentage: 9 },
+    { range: '120+', amount: 2500, percentage: 7 }
+  ];
+
   return (
     <div className="h-full">
       <div className="flex items-center justify-between mb-6">
@@ -37,12 +46,12 @@ const AgingAnalysis: React.FC<AgingAnalysisProps> = ({ data }) => {
           Aging Analysis
         </h3>
         <div className="text-sm text-gray-500 dark:text-gray-400">
-          Total: {formatCurrency(data.reduce((sum, item) => sum + item.amount, 0))}
+          Total: {formatCurrency(agingData.reduce((sum, item) => sum + item.amount, 0))}
         </div>
       </div>
 
       <div className="space-y-4">
-        {data.map((item, index) => (
+        {agingData.map((item, index) => (
           <motion.div
             key={index}
             initial={{ opacity: 0, x: -20 }}
