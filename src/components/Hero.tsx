@@ -113,23 +113,26 @@ const Hero: React.FC = () => {
             </motion.div>
           </div>
         </div>
-
-        {/* Built on Bolt Badge */}
-        <motion.a
-          href="https://bolt.new"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed top-6 right-16 lg:top-8 lg:right-20 z-100"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <img
-            src={`/assets/built-on-bolt-${isDarkMode ? 'white' : 'black'}.png`}
-            alt="Built on Bolt"
-            className="w-20 h-20 sm:w-24 sm:h-24 md:w-24 md:h-24 lg:w-24 lg:h-24 xl:w-24 xl:h-24 object-contain transition-opacity duration-300 hover:opacity-80"
-          />
-        </motion.a>
       </div>
+
+      {/* Built on Bolt Badge - Fixed positioning */}
+      <motion.a
+        href="https://bolt.new"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8 lg:top-6 lg:right-6 xl:top-8 xl:right-8 z-50"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.8 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <img
+          src={`/assets/built-on-bolt-${isDarkMode ? 'white' : 'black'}.png`}
+          alt="Built on Bolt"
+          className="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-22 lg:h-22 xl:w-24 xl:h-24 object-contain transition-all duration-300 hover:opacity-80 drop-shadow-lg"
+        />
+      </motion.a>
     </section>
   );
 };
