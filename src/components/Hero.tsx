@@ -120,7 +120,7 @@ const Hero: React.FC = () => {
         href="https://bolt.new"
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8 lg:top-6 lg:right-6 xl:top-8 xl:right-8 z-50"
+        className="absolute top-16 right-4 sm:top-20 sm:right-6 md:top-24 md:right-8 lg:top-20 lg:right-6 xl:top-24 xl:right-8 z-50"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.8 }}
