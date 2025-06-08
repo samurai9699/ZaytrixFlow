@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Download, Filter } from 'lucide-react';
-import GridLayout from 'react-grid-layout';
+import { Responsive as ResponsiveGridLayout } from 'react-grid-layout';
 import PaymentTrends from './widgets/PaymentTrends';
 import CollectionPerformance from './widgets/CollectionPerformance';
 import AgingAnalysis from './widgets/AgingAnalysis';
@@ -77,6 +77,8 @@ interface CSVRow {
 }
 
 const AnalyticsDashboard: React.FC = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(1200);
   const [dateRange, setDateRange] = useState('last30');
   const [isLoading, setIsLoading] = useState(true);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
@@ -94,13 +96,43 @@ const AnalyticsDashboard: React.FC = () => {
   });
   const { user } = useAuth();
 
-  const layout = [
-    { i: 'payment-trends', x: 0, y: 0, w: 12, h: 8 },
-    { i: 'collection-performance', x: 0, y: 8, w: 6, h: 6 },
-    { i: 'aging-analysis', x: 6, y: 8, w: 6, h: 6 },
-    { i: 'revenue-forecast', x: 0, y: 14, w: 8, h: 8 },
-    { i: 'client-risk', x: 8, y: 14, w: 4, h: 8 },
-  ];
+  // Responsive layouts for different breakpoints
+  const layouts = {
+    lg: [
+      { i: 'payment-trends', x: 0, y: 0, w: 12, h: 8 },
+      { i: 'collection-performance', x: 0, y: 8, w: 6, h: 6 },
+      { i: 'aging-analysis', x: 6, y: 8, w: 6, h: 6 },
+      { i: 'revenue-forecast', x: 0, y: 14, w: 8, h: 8 },
+      { i: 'client-risk', x: 8, y: 14, w: 4, h: 8 },
+    ],
+    md: [
+      { i: 'payment-trends', x: 0, y: 0, w: 12, h: 8 },
+      { i: 'collection-performance', x: 0, y: 8, w: 6, h: 6 },
+      { i: 'aging-analysis', x: 6, y: 8, w: 6, h: 6 },
+      { i: 'revenue-forecast', x: 0, y: 14, w: 12, h: 8 },
+      { i: 'client-risk', x: 0, y: 22, w: 12, h: 6 },
+    ],
+    sm: [
+      { i: 'payment-trends', x: 0, y: 0, w: 12, h: 8 },
+      { i: 'collection-performance', x: 0, y: 8, w: 12, h: 6 },
+      { i: 'aging-analysis', x: 0, y: 14, w: 12, h: 6 },
+      { i: 'revenue-forecast', x: 0, y: 20, w: 12, h: 8 },
+      { i: 'client-risk', x: 0, y: 28, w: 12, h: 6 },
+    ],
+  };
+
+  // Update container width on resize
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   const fetchAnalyticsData = async () => {
     if (!user) return;
@@ -505,14 +537,14 @@ const AnalyticsDashboard: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Financial Analytics</h1>
               <p className="text-gray-500 dark:text-gray-400">Track and analyze your payment performance</p>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => setDateRange('last7')}
                   className={`px-3 py-2 text-sm font-medium rounded-lg ${dateRange === 'last7'
@@ -552,23 +584,25 @@ const AnalyticsDashboard: React.FC = () => {
                 </button>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                <Filter size={20} />
-              </motion.button>
+              <div className="flex items-center gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <Filter size={20} />
+                </motion.button>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg flex items-center gap-2"
-                onClick={handleExport}
-              >
-                <Download size={20} />
-                Export
-              </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg flex items-center gap-2"
+                  onClick={handleExport}
+                >
+                  <Download size={20} />
+                  <span className="hidden sm:inline">Export</span>
+                </motion.button>
+              </div>
             </div>
           </div>
 
@@ -630,18 +664,20 @@ const AnalyticsDashboard: React.FC = () => {
             ))}
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <GridLayout
+          <div ref={containerRef} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 overflow-x-hidden">
+            <ResponsiveGridLayout
               className="layout"
-              layout={layout}
-              cols={12}
+              layouts={layouts}
+              breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+              cols={{ lg: 12, md: 12, sm: 12 }}
               rowHeight={30}
-              width={1200}
+              width={containerWidth}
               isDraggable
               isResizable
               margin={[16, 16]}
+              containerPadding={[0, 0]}
             >
-              <div key="payment-trends">
+              <div key="payment-trends" className="overflow-x-auto">
                 <PaymentTrends data={analyticsData.paymentTrends} dateRange={dateRange} />
               </div>
               <div key="collection-performance">
@@ -650,13 +686,13 @@ const AnalyticsDashboard: React.FC = () => {
               <div key="aging-analysis">
                 <AgingAnalysis data={analyticsData.agingAnalysis} />
               </div>
-              <div key="revenue-forecast">
+              <div key="revenue-forecast" className="overflow-x-auto">
                 <RevenueForecast data={analyticsData.revenueForecast} />
               </div>
               <div key="client-risk">
                 <ClientRisk data={analyticsData.clientRisk} />
               </div>
-            </GridLayout>
+            </ResponsiveGridLayout>
           </div>
         </>
       )}
