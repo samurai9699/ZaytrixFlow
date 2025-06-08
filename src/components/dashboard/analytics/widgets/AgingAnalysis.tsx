@@ -10,6 +10,15 @@ interface AgingAnalysisProps {
 }
 
 const AgingAnalysis: React.FC<AgingAnalysisProps> = ({ data }) => {
+  // Validate data
+  if (!Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className="text-gray-500 dark:text-gray-400">No aging data available</p>
+      </div>
+    );
+  }
+
   const getColor = (index: number) => {
     const colors = [
       'bg-success-500',
@@ -18,10 +27,11 @@ const AgingAnalysis: React.FC<AgingAnalysisProps> = ({ data }) => {
       'bg-error-400',
       'bg-error-500',
     ];
-    return colors[index];
+    return colors[index % colors.length];
   };
 
   const formatCurrency = (value: number) => {
+    if (typeof value !== 'number') return '$0';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -37,14 +47,14 @@ const AgingAnalysis: React.FC<AgingAnalysisProps> = ({ data }) => {
           Aging Analysis
         </h3>
         <div className="text-sm text-gray-500 dark:text-gray-400">
-          Total: {formatCurrency(data.reduce((sum, item) => sum + item.amount, 0))}
+          Total: {formatCurrency(data.reduce((sum, item) => sum + (typeof item.amount === 'number' ? item.amount : 0), 0))}
         </div>
       </div>
 
       <div className="space-y-4">
         {data.map((item, index) => (
           <motion.div
-            key={index}
+            key={item.range || index}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -58,7 +68,7 @@ const AgingAnalysis: React.FC<AgingAnalysisProps> = ({ data }) => {
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {item.percentage}%
+                  {typeof item.percentage === 'number' ? item.percentage : 0}%
                 </span>
                 <span className="text-sm font-medium text-gray-900 dark:text-white w-24 text-right">
                   {formatCurrency(item.amount)}
@@ -68,7 +78,7 @@ const AgingAnalysis: React.FC<AgingAnalysisProps> = ({ data }) => {
             <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${item.percentage}%` }}
+                animate={{ width: `${typeof item.percentage === 'number' ? Math.max(0, Math.min(100, item.percentage)) : 0}%` }}
                 transition={{ duration: 1, delay: index * 0.2 }}
                 className={`absolute top-0 left-0 h-full ${getColor(index)} rounded-full`}
               />
