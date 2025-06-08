@@ -2,16 +2,19 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 import Navbar from './Navbar';
 
 const Hero: React.FC = () => {
+  const { isDarkMode } = useTheme();
+
   return (
-    <section 
-      id="hero" 
+    <section
+      id="hero"
       className="relative min-h-screen pt-20 flex items-center bg-gradient-to-b from-background-light to-white dark:from-background-dark dark:to-gray-900"
     >
       <Navbar />
-      
+
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 dark:bg-primary-900 rounded-full opacity-20 blur-3xl"></div>
@@ -29,7 +32,7 @@ const Hero: React.FC = () => {
               <span className="inline-block py-1 px-3 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 text-sm font-medium mb-6">
                 Launching Soon
               </span>
-              
+
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-heading tracking-tight text-gray-900 dark:text-white mb-6 leading-[1.1]">
                 Get Paid{' '}
                 <span className="relative">
@@ -39,17 +42,17 @@ const Hero: React.FC = () => {
                   <span className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-primary-600 to-secondary-500 dark:from-primary-400 dark:to-secondary-300 rounded-full"></span>
                 </span>
               </h1>
-              
+
               <p className="text-xl leading-relaxed text-gray-600 dark:text-gray-300 mb-8">
                 Automated invoice reminders that handle the awkward follow-ups, so you can focus on what you do best. Never chase payments again.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4">
-                <motion.a 
-                  href="#waitlist" 
+                <motion.a
+                  href="#waitlist"
                   className="px-6 py-3 rounded-lg bg-gradient-to-r from-primary-600 to-secondary-500 text-white font-medium text-lg shadow-lg hover:shadow-primary-500/20 flex items-center justify-center gap-2 group"
-                  whileHover={{ 
-                    scale: 1.05, 
+                  whileHover={{
+                    scale: 1.05,
                     boxShadow: '0 10px 25px rgba(99, 102, 241, 0.3)'
                   }}
                   whileTap={{ scale: 0.95 }}
@@ -57,8 +60,8 @@ const Hero: React.FC = () => {
                   Join Waitlist
                   <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
                 </motion.a>
-                <motion.a 
-                  href="#features" 
+                <motion.a
+                  href="#features"
                   className="px-6 py-3 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-medium text-lg flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -68,7 +71,7 @@ const Hero: React.FC = () => {
               </div>
             </motion.div>
           </div>
-          
+
           <div className="flex-1 w-full max-w-xl">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -110,6 +113,22 @@ const Hero: React.FC = () => {
             </motion.div>
           </div>
         </div>
+
+        {/* Built on Bolt Badge */}
+        <motion.a
+          href="https://bolt.new"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed top-6 right-16 lg:top-8 lg:right-20 z-50"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <img
+            src={`/assets/built-on-bolt-${isDarkMode ? 'white' : 'black'}.png`}
+            alt="Built on Bolt"
+            className="w-20 h-20 sm:w-24 sm:h-24 object-contain transition-opacity duration-300 hover:opacity-80"
+          />
+        </motion.a>
       </div>
     </section>
   );
