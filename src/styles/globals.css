@@ -1,0 +1,73 @@
+/* FullCalendar Customization */
+.reminder-calendar {
+    --fc-border-color: theme('colors.gray.200');
+    --fc-button-bg-color: theme('colors.primary.600');
+    --fc-button-border-color: theme('colors.primary.600');
+    --fc-button-hover-bg-color: theme('colors.primary.700');
+    --fc-button-hover-border-color: theme('colors.primary.700');
+    --fc-button-active-bg-color: theme('colors.primary.800');
+    --fc-button-active-border-color: theme('colors.primary.800');
+    --fc-event-bg-color: theme('colors.primary.600');
+    --fc-event-border-color: theme('colors.primary.600');
+    --fc-today-bg-color: theme('colors.primary.50');
+}
+
+.dark .reminder-calendar {
+    --fc-border-color: theme('colors.gray.700');
+    --fc-button-bg-color: theme('colors.primary.500');
+    --fc-button-border-color: theme('colors.primary.500');
+    --fc-button-hover-bg-color: theme('colors.primary.600');
+    --fc-button-hover-border-color: theme('colors.primary.600');
+    --fc-button-active-bg-color: theme('colors.primary.700');
+    --fc-button-active-border-color: theme('colors.primary.700');
+    --fc-event-bg-color: theme('colors.primary.500');
+    --fc-event-border-color: theme('colors.primary.500');
+    --fc-today-bg-color: theme('colors.primary.900/30');
+    --fc-page-bg-color: theme('colors.gray.800');
+    --fc-neutral-bg-color: theme('colors.gray.800');
+    --fc-neutral-text-color: theme('colors.gray.300');
+    --fc-button-text-color: theme('colors.white');
+}
+
+.reminder-calendar .fc-toolbar-title {
+    font-size: theme('fontSize.xl');
+    font-weight: theme('fontWeight.semibold');
+    color: theme('colors.gray.900');
+}
+
+.dark .reminder-calendar .fc-toolbar-title {
+    color: theme('colors.white');
+}
+
+.reminder-calendar .fc-button {
+    font-size: theme('fontSize.sm');
+    font-weight: theme('fontWeight.medium');
+    padding: theme('spacing.2') theme('spacing.4');
+    border-radius: theme('borderRadius.lg');
+}
+
+.reminder-calendar .fc-event {
+    border-radius: theme('borderRadius.md');
+    padding: theme('spacing.1') theme('spacing.2');
+    font-size: theme('fontSize.sm');
+    cursor: pointer;
+}
+
+.reminder-calendar .fc-daygrid-day-number,
+.reminder-calendar .fc-col-header-cell-cushion {
+    color: theme('colors.gray.700');
+    text-decoration: none !important;
+}
+
+.dark .reminder-calendar .fc-daygrid-day-number,
+.dark .reminder-calendar .fc-col-header-cell-cushion {
+    color: theme('colors.gray.300');
+}
+
+.reminder-calendar .fc-day-today {
+    background-color: theme('colors.primary.50/30') !important;
+}
+
+.dark .reminder-calendar .fc-day-today {
+    background-color: theme('colors.primary.900/20') !important;
+}
