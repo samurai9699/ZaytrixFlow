@@ -23,30 +23,42 @@ const Footer: React.FC = () => {
             </p>
             <div className="flex space-x-4">
               <motion.a
-                href="#"
+                href="https://facebook.com/zaytrixflow"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 whileHover={{ y: -3 }}
+                aria-label="Follow us on Facebook"
               >
                 <Facebook size={20} />
               </motion.a>
               <motion.a
-                href="#"
+                href="https://twitter.com/zaytrixflow"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 whileHover={{ y: -3 }}
+                aria-label="Follow us on Twitter"
               >
                 <Twitter size={20} />
               </motion.a>
               <motion.a
-                href="#"
+                href="https://instagram.com/zaytrixflow"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 whileHover={{ y: -3 }}
+                aria-label="Follow us on Instagram"
               >
                 <Instagram size={20} />
               </motion.a>
               <motion.a
-                href="https://www.instagram.com/"
+                href="https://linkedin.com/company/zaytrixflow"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 whileHover={{ y: -3 }}
+                aria-label="Follow us on LinkedIn"
               >
                 <Linkedin size={20} />
               </motion.a>
