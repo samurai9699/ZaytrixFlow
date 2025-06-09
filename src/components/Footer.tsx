@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Facebook, Twitter, Instagram, Linkedin, Mail } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
-  
+
   return (
     <footer className="bg-gray-50 dark:bg-gray-900 pt-16 pb-8 border-t border-gray-200 dark:border-gray-800">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -22,29 +22,29 @@ const Footer: React.FC = () => {
               Helping freelancers get paid on time, every time, without the awkward follow-ups.
             </p>
             <div className="flex space-x-4">
-              <motion.a 
-                href="#" 
+              <motion.a
+                href="#"
                 className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 whileHover={{ y: -3 }}
               >
                 <Facebook size={20} />
               </motion.a>
-              <motion.a 
-                href="#" 
+              <motion.a
+                href="#"
                 className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 whileHover={{ y: -3 }}
               >
                 <Twitter size={20} />
               </motion.a>
-              <motion.a 
-                href="#" 
+              <motion.a
+                href="#"
                 className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 whileHover={{ y: -3 }}
               >
                 <Instagram size={20} />
               </motion.a>
-              <motion.a 
-                href="#" 
+              <motion.a
+                href="#"
                 className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 whileHover={{ y: -3 }}
               >
@@ -52,7 +52,7 @@ const Footer: React.FC = () => {
               </motion.a>
             </div>
           </div>
-          
+
           <div>
             <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Product</h3>
             <ul className="space-y-3">
@@ -62,17 +62,17 @@ const Footer: React.FC = () => {
               <li><Link to="/roadmap" className="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Roadmap</Link></li>
             </ul>
           </div>
-          
+
           <div>
             <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Company</h3>
             <ul className="space-y-3">
               <li><Link to="/about" className="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">About</Link></li>
               <li><Link to="/blog" className="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Blog</Link></li>
               <li><Link to="/careers" className="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Careers</Link></li>
-              <li><a href="/#testimonials" className="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Testimonials</a></li>
+              <li><Link to="/testimonials" className="text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Testimonials</Link></li>
             </ul>
           </div>
-          
+
           <div>
             <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Support</h3>
             <ul className="space-y-3">
@@ -83,7 +83,7 @@ const Footer: React.FC = () => {
             </ul>
           </div>
         </div>
-        
+
         <div className="pt-8 border-t border-gray-200 dark:border-gray-800 text-center sm:flex sm:justify-between sm:text-left">
           <p className="text-gray-500 dark:text-gray-400 mb-4 sm:mb-0">
             © {currentYear} ZaytrixFlow. All rights reserved.
