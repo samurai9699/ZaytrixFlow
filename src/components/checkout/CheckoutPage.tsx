@@ -265,7 +265,7 @@ const CheckoutPage: React.FC = () => {
               )}
 
               <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                By proceeding, you agree to our <Link to="/terms" className="text-primary-600 dark:text-primary-400 hover:underline">Terms of Service</Link> and <Link to="/privacy" className="text-primary-600 dark:text-primary-400 hover:underline">Privacy Policy</Link>.
+                By proceeding, you agree to our <Link to="/terms" className="text-primary-600 dark:text-primary-400 hover:underline">Terms of Service</Link> and <Link to="/privacy" className=\"text-primary-600 dark:text-primary-400 hover:underline">Privacy Policy</Link>.
               </div>
             </div>
           </div>
