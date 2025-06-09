@@ -20,11 +20,10 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navbarClasses = `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-    isScrolled
-      ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md'
-      : 'bg-transparent'
-  }`;
+  const navbarClasses = `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
+    ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md'
+    : 'bg-transparent'
+    }`;
 
   const handleDropdownToggle = (key: string) => {
     setActiveDropdown(activeDropdown === key ? null : key);
@@ -35,8 +34,8 @@ const Navbar: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <motion.a 
-              href="/" 
+            <motion.a
+              href="/"
               className="flex items-center gap-2"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -46,7 +45,7 @@ const Navbar: React.FC = () => {
               </span>
             </motion.a>
           </div>
-          
+
           <div className="hidden md:flex items-center space-x-8">
             {/* Features Dropdown */}
             <div className="relative group">
@@ -84,10 +83,18 @@ const Navbar: React.FC = () => {
               Pricing
             </a>
 
-            <a href="#testimonials" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
+            <Link to="/testimonials" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
               Testimonials
-            </a>
-            
+            </Link>
+
+            <Link to="/help" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
+              Help
+            </Link>
+
+            <Link to="/contact" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
+              Contact
+            </Link>
+
             <motion.button
               onClick={toggleTheme}
               className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
@@ -96,7 +103,7 @@ const Navbar: React.FC = () => {
             >
               {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
             </motion.button>
-            
+
             <Link
               to="/login"
               className="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -111,7 +118,7 @@ const Navbar: React.FC = () => {
               Sign Up
             </Link>
           </div>
-          
+
           <div className="md:hidden flex items-center space-x-4">
             <motion.button
               onClick={toggleTheme}
@@ -121,7 +128,7 @@ const Navbar: React.FC = () => {
             >
               {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
             </motion.button>
-            
+
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-200"
@@ -135,7 +142,7 @@ const Navbar: React.FC = () => {
       {/* Mobile menu */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
+          <motion.div
             className="md:hidden bg-white dark:bg-gray-900 shadow-lg"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -143,16 +150,29 @@ const Navbar: React.FC = () => {
             transition={{ duration: 0.3 }}
           >
             <div className="px-4 pt-2 pb-6 space-y-2">
-              {NAV_ITEMS.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {item.label}
+              <div className="flex flex-col space-y-4">
+                <a href="#features" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
+                  Features
                 </a>
-              ))}
+                <a href="#pricing" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
+                  Pricing
+                </a>
+                <Link to="/testimonials" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
+                  Testimonials
+                </Link>
+                <Link to="/help" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
+                  Help
+                </Link>
+                <Link to="/contact" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
+                  Contact
+                </Link>
+                <a
+                  href="/login"
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors"
+                >
+                  Login
+                </a>
+              </div>
               <div className="pt-4 space-y-2">
                 <Link
                   to="/login"
