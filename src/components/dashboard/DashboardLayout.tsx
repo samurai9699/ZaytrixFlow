@@ -62,12 +62,13 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
         if (error) {
           console.error('Error fetching subscription:', error);
+          setSubscriptionPlan('Free');
           return;
         }
 
         if (data?.price_id && data.subscription_status === 'active') {
           const product = getProductByPriceId(data.price_id);
-          setSubscriptionPlan(product?.name || 'Unknown Plan');
+          setSubscriptionPlan(product?.name || 'Free');
         } else {
           setSubscriptionPlan('Free');
         }

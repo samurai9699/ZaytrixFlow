@@ -3,27 +3,67 @@ import { motion } from 'framer-motion';
 import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { getProductByPriceId } from '../../stripe-config';
 
 const CheckoutSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const sessionId = searchParams.get('session_id');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionDetails, setSubscriptionDetails] = useState<{
+    planName: string;
+    billingCycle: string;
+  } | null>(null);
 
   useEffect(() => {
-    if (sessionId) {
-      // Simulate verification process
-      const timer = setTimeout(() => {
-        setLoading(false);
-        toast.success('Payment successful! Welcome to ZaytrixFlow!');
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    } else {
+    if (sessionId && user) {
+      verifyCheckoutSession();
+    } else if (!sessionId) {
       setError('No session ID found');
       setLoading(false);
     }
-  }, [sessionId]);
+  }, [sessionId, user]);
+
+  const verifyCheckoutSession = async () => {
+    try {
+      setLoading(true);
+      
+      // Wait for a moment to allow the webhook to process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Fetch the user's subscription
+      const { data: subscription, error: subscriptionError } = await supabase
+        .from('stripe_user_subscriptions')
+        .select('*')
+        .maybeSingle();
+      
+      if (subscriptionError) {
+        throw subscriptionError;
+      }
+      
+      if (subscription?.price_id) {
+        const product = getProductByPriceId(subscription.price_id);
+        if (product) {
+          setSubscriptionDetails({
+            planName: product.name,
+            billingCycle: subscription.current_period_end && subscription.current_period_start 
+              ? 'annual' 
+              : 'monthly'
+          });
+        }
+      }
+      
+      toast.success('Payment successful! Welcome to ZaytrixFlow!');
+    } catch (error) {
+      console.error('Error verifying checkout session:', error);
+      setError('Failed to verify your subscription. Please contact support.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -100,7 +140,16 @@ const CheckoutSuccessPage: React.FC = () => {
           transition={{ delay: 0.4 }}
           className="text-gray-600 dark:text-gray-300 mb-8"
         >
-          Thank you for subscribing to ZaytrixFlow! Your account has been activated and you can now start managing your invoices and payments.
+          {subscriptionDetails ? (
+            <>
+              Thank you for subscribing to the <span className="font-semibold">{subscriptionDetails.planName} Plan</span>! 
+              Your account has been activated and you can now start managing your invoices and payments.
+            </>
+          ) : (
+            <>
+              Thank you for subscribing to ZaytrixFlow! Your account has been activated and you can now start managing your invoices and payments.
+            </>
+          )}
         </motion.p>
 
         <motion.div

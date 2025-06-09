@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { CreditCard, GoalIcon as PaypalIcon, ArrowLeft, Check, Loader2 } from 'lucide-react';
@@ -7,39 +7,32 @@ import { STRIPE_PRODUCTS } from '../../stripe-config';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 
-const PRICING_PLANS = {
-  pro: {
-    title: "Pro Plan",
-    price: { monthly: 8, annual: 100 },
-  },
-  premium: {
-    title: "Premium Plan",
-    price: { monthly: 15, annual: 150 },
-  },
-};
-
 const CheckoutPage: React.FC = () => {
   const { planId } = useParams<{ planId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const billingCycle = searchParams.get('billing') || 'monthly';
-  const plan = planId ? PRICING_PLANS[planId as keyof typeof PRICING_PLANS] : null;
-  const stripeProduct = planId ? STRIPE_PRODUCTS[planId] : null;
+  const stripeProduct = planId ? STRIPE_PRODUCTS[planId as keyof typeof STRIPE_PRODUCTS] : null;
 
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>('card');
   const [loading, setLoading] = useState(false);
-  const [cardDetails, setCardDetails] = useState({
-    number: '',
-    expiry: '',
-    cvc: '',
-    name: '',
-  });
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>('card');
 
-  if (!plan || !stripeProduct) {
-    navigate('/');
+  useEffect(() => {
+    // Redirect if no valid plan is selected
+    if (!stripeProduct) {
+      toast.error('Invalid plan selected');
+      navigate('/#pricing');
+    }
+  }, [stripeProduct, navigate]);
+
+  if (!stripeProduct) {
     return null;
   }
+
+  const price = billingCycle === 'annual' 
+    ? Math.round(stripeProduct.price * 12 * 0.8) 
+    : stripeProduct.price;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,12 +90,10 @@ const CheckoutPage: React.FC = () => {
   const handlePayPalClick = async () => {
     setLoading(true);
     try {
-      const paypalUrl = 'https://www.paypal.com/agreements/approve?ba_token=BA-5JU79209NR727303P';
-      window.open(paypalUrl, '_blank', 'noopener,noreferrer');
-      toast.success('Redirecting to PayPal...');
+      toast.error('PayPal integration is not available yet');
+      setLoading(false);
     } catch (error) {
       toast.error('Failed to connect to PayPal. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
@@ -133,9 +124,9 @@ const CheckoutPage: React.FC = () => {
 
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-300">{plan.title}</span>
+                  <span className="text-gray-600 dark:text-gray-300">{stripeProduct.name} Plan</span>
                   <span className="text-gray-900 dark:text-white font-medium">
-                    ${billingCycle === 'annual' ? plan.price.annual : plan.price.monthly}
+                    ${price}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -148,13 +139,52 @@ const CheckoutPage: React.FC = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-900 dark:text-white font-medium">Total</span>
                     <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                      ${billingCycle === 'annual' ? plan.price.annual : plan.price.monthly}
+                      ${price}
                       <span className="text-sm text-gray-500 dark:text-gray-400">
                         /{billingCycle === 'annual' ? 'year' : 'month'}
                       </span>
                     </span>
                   </div>
                 </div>
+              </div>
+
+              <div className="mt-6 bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg border border-primary-100 dark:border-primary-800">
+                <h3 className="font-medium text-primary-800 dark:text-primary-200 mb-2">
+                  {stripeProduct.name} Plan Includes:
+                </h3>
+                <ul className="space-y-2">
+                  {stripeProduct.name === 'Pro' ? (
+                    <>
+                      <li className="flex items-start">
+                        <Check size={16} className="text-primary-600 dark:text-primary-400 mt-0.5 mr-2 flex-shrink-0" />
+                        <span className="text-sm text-primary-700 dark:text-primary-300">Up to 20 clients</span>
+                      </li>
+                      <li className="flex items-start">
+                        <Check size={16} className="text-primary-600 dark:text-primary-400 mt-0.5 mr-2 flex-shrink-0" />
+                        <span className="text-sm text-primary-700 dark:text-primary-300">10 invoice templates</span>
+                      </li>
+                      <li className="flex items-start">
+                        <Check size={16} className="text-primary-600 dark:text-primary-400 mt-0.5 mr-2 flex-shrink-0" />
+                        <span className="text-sm text-primary-700 dark:text-primary-300">Advanced reminder schedule</span>
+                      </li>
+                    </>
+                  ) : (
+                    <>
+                      <li className="flex items-start">
+                        <Check size={16} className="text-primary-600 dark:text-primary-400 mt-0.5 mr-2 flex-shrink-0" />
+                        <span className="text-sm text-primary-700 dark:text-primary-300">Unlimited clients</span>
+                      </li>
+                      <li className="flex items-start">
+                        <Check size={16} className="text-primary-600 dark:text-primary-400 mt-0.5 mr-2 flex-shrink-0" />
+                        <span className="text-sm text-primary-700 dark:text-primary-300">Custom invoice templates</span>
+                      </li>
+                      <li className="flex items-start">
+                        <Check size={16} className="text-primary-600 dark:text-primary-400 mt-0.5 mr-2 flex-shrink-0" />
+                        <span className="text-sm text-primary-700 dark:text-primary-300">AI-powered reminder optimization</span>
+                      </li>
+                    </>
+                  )}
+                </ul>
               </div>
             </div>
 
@@ -198,63 +228,6 @@ const CheckoutPage: React.FC = () => {
 
               {paymentMethod === 'card' ? (
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Card Number
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="1234 5678 9012 3456"
-                      value={cardDetails.number}
-                      onChange={(e) => setCardDetails({ ...cardDetails, number: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Expiry Date
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="MM/YY"
-                        value={cardDetails.expiry}
-                        onChange={(e) => setCardDetails({ ...cardDetails, expiry: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        CVC
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="123"
-                        value={cardDetails.cvc}
-                        onChange={(e) => setCardDetails({ ...cardDetails, cvc: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Cardholder Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="John Doe"
-                      value={cardDetails.name}
-                      onChange={(e) => setCardDetails({ ...cardDetails, name: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800"
-                      required
-                    />
-                  </div>
-
                   <motion.button
                     type="submit"
                     disabled={loading}
@@ -268,7 +241,7 @@ const CheckoutPage: React.FC = () => {
                         Processing...
                       </span>
                     ) : (
-                      'Complete Purchase'
+                      'Proceed to Checkout'
                     )}
                   </motion.button>
                 </form>
@@ -290,6 +263,10 @@ const CheckoutPage: React.FC = () => {
                   )}
                 </motion.button>
               )}
+
+              <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                By proceeding, you agree to our <Link to="/terms" className="text-primary-600 dark:text-primary-400 hover:underline">Terms of Service</Link> and <Link to="/privacy" className="text-primary-600 dark:text-primary-400 hover:underline">Privacy Policy</Link>.
+              </div>
             </div>
           </div>
         </div>

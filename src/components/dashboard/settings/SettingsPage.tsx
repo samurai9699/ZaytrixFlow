@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Bell, Palette, Key, Shield, Puzzle } from 'lucide-react';
+import { User, Bell, Palette, Key, Shield, Puzzle, CreditCard } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import ProfileSettings from './ProfileSettings';
 import NotificationSettings from './NotificationSettings';
@@ -8,6 +8,7 @@ import ThemeSettings from './ThemeSettings';
 import ApiKeySettings from './ApiKeySettings';
 import SecuritySettings from './SecuritySettings';
 import IntegrationsSettings from './IntegrationsSettings';
+import SubscriptionSettings from './SubscriptionSettings';
 
 const SETTINGS_TABS = [
   {
@@ -15,6 +16,12 @@ const SETTINGS_TABS = [
     label: 'Profile',
     icon: User,
     component: ProfileSettings,
+  },
+  {
+    id: 'subscription',
+    label: 'Subscription',
+    icon: CreditCard,
+    component: SubscriptionSettings,
   },
   {
     id: 'notifications',
