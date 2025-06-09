@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, ComponentType, LazyExoticComponent } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -7,11 +7,18 @@ import ScrollToTop from './utils/ScrollToTop';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import PageTransition from './components/common/PageTransition';
 
+// Define type for components with preload
+type PreloadableComponent = LazyExoticComponent<ComponentType<Record<string, never>>> & {
+  preload?: () => Promise<{ default: ComponentType<Record<string, never>> }>;
+};
+
 // Lazy load components with preload
-const preloadComponent = (factory: () => Promise<any>) => {
+const preloadComponent = (
+  factory: () => Promise<{ default: ComponentType<Record<string, never>> }>
+): PreloadableComponent => {
   const Component = React.lazy(factory);
-  Component.preload = factory;
-  return Component;
+  (Component as PreloadableComponent).preload = factory;
+  return Component as PreloadableComponent;
 };
 
 // Preload critical components
@@ -51,6 +58,7 @@ const HelpCenterPage = React.lazy(() => import('./components/pages/HelpCenterPag
 const ContactPage = React.lazy(() => import('./components/pages/ContactPage'));
 const PrivacyPolicyPage = React.lazy(() => import('./components/pages/PrivacyPolicyPage'));
 const TermsPage = React.lazy(() => import('./components/pages/TermsPage'));
+const TestimonialsPage = React.lazy(() => import('./components/pages/TestimonialsPage'));
 
 // Preload critical routes
 if (typeof window !== 'undefined') {
@@ -91,10 +99,10 @@ function App() {
         <div className="bg-background-light dark:bg-background-dark text-gray-900 dark:text-white min-h-screen">
           <Toaster position="top-right" />
           <ScrollToTop />
-          
+
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            
+
             {/* Auth Routes */}
             <Route path="/login" element={
               <PageTransition>
@@ -103,7 +111,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
             <Route path="/register" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -111,7 +119,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
             {/* Protected Dashboard Routes */}
             <Route path="/dashboard" element={
               <Suspense fallback={<LoadingSpinner />}>
@@ -122,7 +130,7 @@ function App() {
                 </ProtectedRoute>
               </Suspense>
             } />
-            
+
             <Route path="/dashboard/invoices" element={
               <Suspense fallback={<LoadingSpinner />}>
                 <ProtectedRoute>
@@ -172,7 +180,7 @@ function App() {
                 </ProtectedRoute>
               </Suspense>
             } />
-            
+
             {/* Footer Pages */}
             <Route path="/about" element={
               <PageTransition>
@@ -181,7 +189,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
             <Route path="/blog" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -189,7 +197,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
             <Route path="/roadmap" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -197,7 +205,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
             <Route path="/integrations" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -205,7 +213,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
             <Route path="/careers" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -213,7 +221,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
             <Route path="/help" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -221,7 +229,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
             <Route path="/contact" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -229,7 +237,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
             <Route path="/privacy" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -237,7 +245,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
             <Route path="/terms" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -245,7 +253,15 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
+            <Route path="/testimonials" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <TestimonialsPage />
+                </Suspense>
+              </PageTransition>
+            } />
+
             {/* Checkout Routes */}
             <Route path="/checkout/:planId" element={
               <PageTransition>
@@ -254,7 +270,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
             <Route path="/checkout/success" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -262,7 +278,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
             <Route path="/checkout/cancel" element={
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
@@ -270,7 +286,7 @@ function App() {
                 </Suspense>
               </PageTransition>
             } />
-            
+
             {/* Fallback route */}
             <Route path="*" element={<LandingPage />} />
           </Routes>
