@@ -115,7 +115,7 @@ const CheckoutSuccessPage: React.FC = () => {
           >
             Go to Dashboard
           </Link>
-
+          
           <Link
             to="/"
             className="block w-full px-6 py-3 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
