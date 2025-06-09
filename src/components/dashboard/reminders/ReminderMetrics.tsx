@@ -1,126 +1,154 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Bell, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Bell, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
+import { useAuth } from '../../../contexts/AuthContext';
 
-const data = [
-  { name: 'Mon', sent: 4, opened: 3, paid: 2 },
-  { name: 'Tue', sent: 3, opened: 2, paid: 1 },
-  { name: 'Wed', sent: 5, opened: 4, paid: 3 },
-  { name: 'Thu', sent: 6, opened: 4, paid: 2 },
-  { name: 'Fri', sent: 4, opened: 3, paid: 2 },
-  { name: 'Sat', sent: 3, opened: 2, paid: 1 },
-  { name: 'Sun', sent: 4, opened: 3, paid: 2 },
-];
+interface ReminderMetricsData {
+  total: number;
+  pending: number;
+  sent: number;
+  overdue: number;
+  completionRate: number;
+}
 
 const ReminderMetrics: React.FC = () => {
+  const { user } = useAuth();
+  const [metrics, setMetrics] = useState<ReminderMetricsData>({
+    total: 0,
+    pending: 0,
+    sent: 0,
+    overdue: 0,
+    completionRate: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  const fetchMetrics = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const now = new Date().toISOString();
+
+      // Fetch all reminders for the user
+      const { data: reminders, error } = await supabase
+        .from('reminders')
+        .select('*')
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      const reminderStats = (reminders || []).reduce((acc, reminder) => {
+        acc.total++;
+
+        switch (reminder.status) {
+          case 'pending':
+            acc.pending++;
+            break;
+          case 'sent':
+            acc.sent++;
+            break;
+          case 'completed':
+            acc.completed++;
+            break;
+          default:
+            break;
+        }
+
+        // Check for overdue reminders
+        if (reminder.due_date < now && reminder.status !== 'completed') {
+          acc.overdue++;
+        }
+
+        return acc;
+      }, {
+        total: 0,
+        pending: 0,
+        sent: 0,
+        completed: 0,
+        overdue: 0
+      });
+
+      setMetrics({
+        ...reminderStats,
+        completionRate: reminderStats.total > 0
+          ? Math.round((reminderStats.completed / reminderStats.total) * 100)
+          : 0
+      });
+
+    } catch (error) {
+      console.error('Error fetching reminder metrics:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchMetrics();
+    }
+  }, [user, fetchMetrics]);
+
+  const metrics_data = [
+    {
+      title: 'Total Reminders',
+      value: metrics.total,
+      icon: Bell,
+      color: 'text-primary-500',
+      bgColor: 'bg-primary-100 dark:bg-primary-900/30'
+    },
+    {
+      title: 'Pending',
+      value: metrics.pending,
+      icon: Clock,
+      color: 'text-warning-500',
+      bgColor: 'bg-warning-100 dark:bg-warning-900/30'
+    },
+    {
+      title: 'Sent',
+      value: metrics.sent,
+      icon: CheckCircle,
+      color: 'text-success-500',
+      bgColor: 'bg-success-100 dark:bg-success-900/30'
+    },
+    {
+      title: 'Overdue',
+      value: metrics.overdue,
+      icon: AlertCircle,
+      color: 'text-error-500',
+      bgColor: 'bg-error-100 dark:bg-error-900/30'
+    }
+  ];
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {[
-        {
-          title: 'Scheduled',
-          value: '24',
-          icon: <Clock className="text-primary-600 dark:text-primary-400" />,
-          change: '+12.5%',
-          positive: true
-        },
-        {
-          title: 'Sent Today',
-          value: '8',
-          icon: <Bell className="text-warning-600 dark:text-warning-400" />,
-          change: '-2.3%',
-          positive: false
-        },
-        {
-          title: 'Opened',
-          value: '68%',
-          icon: <CheckCircle className="text-success-600 dark:text-success-400" />,
-          change: '+8.1%',
-          positive: true
-        },
-        {
-          title: 'Failed',
-          value: '2',
-          icon: <AlertCircle className="text-error-600 dark:text-error-400" />,
-          change: '+1',
-          positive: false
-        }
-      ].map((metric, index) => (
+      {metrics_data.map((metric, index) => (
         <motion.div
-          key={index}
+          key={metric.title}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
           className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
-              {metric.icon}
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-lg ${metric.bgColor}`}>
+              <metric.icon className={`h-6 w-6 ${metric.color}`} />
             </div>
-            <span className={`text-sm font-medium flex items-center gap-1 ${
-              metric.positive ? 'text-success-600' : 'text-error-600'
-            }`}>
-              {metric.change}
-            </span>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                {metric.title}
+              </h3>
+              <div className="mt-1 flex items-baseline gap-2">
+                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                  {loading ? '-' : metric.value}
+                </p>
+                {metric.title === 'Completion Rate' && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">%</p>
+                )}
+              </div>
+            </div>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-            {metric.value}
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{metric.title}</p>
         </motion.div>
       ))}
-
-      {/* Chart */}
-      <div className="lg:col-span-4 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-          Reminder Performance
-        </h3>
-        <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data}>
-              <defs>
-                <linearGradient id="colorSent" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366F1" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorOpened" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorPaid" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis dataKey="name" stroke="#9CA3AF" />
-              <YAxis stroke="#9CA3AF" />
-              <Tooltip />
-              <Area
-                type="monotone"
-                dataKey="sent"
-                stroke="#6366F1"
-                fillOpacity={1}
-                fill="url(#colorSent)"
-              />
-              <Area
-                type="monotone"
-                dataKey="opened"
-                stroke="#10B981"
-                fillOpacity={1}
-                fill="url(#colorOpened)"
-              />
-              <Area
-                type="monotone"
-                dataKey="paid"
-                stroke="#8B5CF6"
-                fillOpacity={1}
-                fill="url(#colorPaid)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
     </div>
   );
 };
