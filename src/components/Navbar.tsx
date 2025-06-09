@@ -87,14 +87,6 @@ const Navbar: React.FC = () => {
               Testimonials
             </Link>
 
-            <Link to="/help" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
-              Help
-            </Link>
-
-            <Link to="/contact" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
-              Contact
-            </Link>
-
             <motion.button
               onClick={toggleTheme}
               className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
@@ -104,12 +96,14 @@ const Navbar: React.FC = () => {
               {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
             </motion.button>
 
-            <Link
-              to="/login"
-              className="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            <motion.a
+              href="/login"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               Login
-            </Link>
+            </motion.a>
 
             <Link
               to="/register"
@@ -159,12 +153,6 @@ const Navbar: React.FC = () => {
                 </a>
                 <Link to="/testimonials" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
                   Testimonials
-                </Link>
-                <Link to="/help" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
-                  Help
-                </Link>
-                <Link to="/contact" className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors dark:text-gray-200 dark:hover:text-primary-400">
-                  Contact
                 </Link>
                 <a
                   href="/login"
