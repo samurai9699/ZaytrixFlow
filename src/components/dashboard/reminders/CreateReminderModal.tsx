@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, FileText, Loader2, Bell } from 'lucide-react';
+import { X, Loader2, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 
-interface CreateReminderModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
+interface Reminder {
+  id: string;
+  title: string;
+  description?: string;
+  due_date: string;
+  status: string;
+  invoice_id?: string;
 }
 
 interface Invoice {
@@ -28,7 +31,14 @@ const reminderSchema = z.object({
   invoice_id: z.string().optional(),
 });
 
-const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClose, onSuccess }) => {
+interface CreateReminderModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  editReminder?: Reminder | null;
+}
+
+const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClose, onSuccess, editReminder }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -43,12 +53,21 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
   useEffect(() => {
     if (isOpen && user) {
       fetchInvoices();
-      // Set default due date to tomorrow
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      setDueDate(tomorrow.toISOString().split('T')[0]);
+
+      if (editReminder) {
+        // Populate form with existing reminder data
+        setTitle(editReminder.title);
+        setDueDate(editReminder.due_date.split('T')[0]);
+        setNotes(editReminder.description || '');
+        setSelectedInvoiceId(editReminder.invoice_id || '');
+      } else {
+        // Set default due date to tomorrow for new reminders
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        setDueDate(tomorrow.toISOString().split('T')[0]);
+      }
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, editReminder]);
 
   const fetchInvoices = async () => {
     if (!user) return;
@@ -106,25 +125,45 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
     try {
       setLoading(true);
 
-      const { error } = await supabase
-        .from('reminders')
-        .insert({
-          user_id: user.id,
-          title: title.trim(),
-          description: notes.trim() || null,
-          due_date: dueDate,
-          invoice_id: selectedInvoiceId || null,
-          status: 'pending',
-        });
+      if (editReminder) {
+        // Update existing reminder
+        const { error } = await supabase
+          .from('reminders')
+          .update({
+            title: title.trim(),
+            description: notes.trim() || null,
+            due_date: dueDate,
+            invoice_id: selectedInvoiceId || null,
+          })
+          .eq('id', editReminder.id)
+          .eq('user_id', user.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast.success('Reminder created successfully!');
+        toast.success('Reminder updated successfully!');
+      } else {
+        // Create new reminder
+        const { error } = await supabase
+          .from('reminders')
+          .insert({
+            user_id: user.id,
+            title: title.trim(),
+            description: notes.trim() || null,
+            due_date: dueDate,
+            invoice_id: selectedInvoiceId || null,
+            status: 'pending',
+          });
+
+        if (error) throw error;
+
+        toast.success('Reminder created successfully!');
+      }
+
       resetForm();
       onSuccess();
     } catch (error) {
-      console.error('Error creating reminder:', error);
-      toast.error('Failed to create reminder. Please try again.');
+      console.error('Error saving reminder:', error);
+      toast.error(`Failed to ${editReminder ? 'update' : 'create'} reminder. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -168,8 +207,12 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
                 <Bell className="h-5 w-5 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create Reminder</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Set up a new payment reminder</p>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {editReminder ? 'Edit Reminder' : 'Create Reminder'}
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {editReminder ? 'Update reminder details' : 'Set up a new payment reminder'}
+                </p>
               </div>
             </div>
             <button
@@ -182,22 +225,18 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
 
           {/* Content */}
           <div className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Title *
+                  Title
                 </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className={`w-full pl-10 pr-4 py-2 rounded-lg border ${errors.title ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
-                      } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800`}
-                    placeholder="Payment reminder for..."
-                  />
-                  <FileText className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                </div>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800"
+                  placeholder="Enter reminder title..."
+                />
                 {errors.title && (
                   <p className="mt-1 text-sm text-error-500">{errors.title}</p>
                 )}
@@ -205,18 +244,14 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Due Date *
+                  Due Date
                 </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className={`w-full pl-10 pr-4 py-2 rounded-lg border ${errors.due_date ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
-                      } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800`}
-                  />
-                  <Calendar className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                </div>
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800"
+                />
                 {errors.due_date && (
                   <p className="mt-1 text-sm text-error-500">{errors.due_date}</p>
                 )}
@@ -224,17 +259,17 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Related Invoice (Optional)
+                  Link to Invoice (Optional)
                 </label>
                 <select
                   value={selectedInvoiceId}
                   onChange={(e) => setSelectedInvoiceId(e.target.value)}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800"
                 >
-                  <option value="">Select an invoice (optional)</option>
+                  <option value="">Select an invoice...</option>
                   {invoices.map((invoice) => (
                     <option key={invoice.id} value={invoice.id}>
-                      {invoice.invoice_number} - {invoice.client_name} ({formatCurrency(invoice.amount)})
+                      {invoice.client_name} - {formatCurrency(invoice.amount)}
                     </option>
                   ))}
                 </select>
@@ -276,10 +311,10 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating...
+                  {editReminder ? 'Updating...' : 'Creating...'}
                 </>
               ) : (
-                'Create Reminder'
+                editReminder ? 'Update Reminder' : 'Create Reminder'
               )}
             </motion.button>
           </div>

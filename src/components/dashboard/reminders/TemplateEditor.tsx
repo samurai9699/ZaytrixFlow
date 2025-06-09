@@ -26,8 +26,12 @@ import { toast } from 'sonner';
 interface Template {
   id: string;
   name: string;
-  content: string;
-  type: string;
+  description?: string;
+  subject: string;
+  body: string;
+  variables: Record<string, string | number | null>;
+  created_at: string;
+  updated_at: string;
 }
 
 const TemplateEditor: React.FC = () => {
@@ -37,6 +41,7 @@ const TemplateEditor: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [templateSubject, setTemplateSubject] = useState('');
 
   const editor = useEditor({
     extensions: [
@@ -54,9 +59,6 @@ const TemplateEditor: React.FC = () => {
       }),
     ],
     content: '',
-    onUpdate: () => {
-      // Auto-save functionality could be added here
-    },
   });
 
   useEffect(() => {
@@ -85,7 +87,8 @@ const TemplateEditor: React.FC = () => {
       if (data && data.length > 0 && !selectedTemplate) {
         setSelectedTemplate(data[0].id);
         setTemplateName(data[0].name);
-        editor?.commands.setContent(data[0].content);
+        setTemplateSubject(data[0].subject);
+        editor?.commands.setContent(data[0].body);
       }
     } catch (error) {
       console.error('Error fetching templates:', error);
@@ -100,19 +103,20 @@ const TemplateEditor: React.FC = () => {
     if (template) {
       setSelectedTemplate(templateId);
       setTemplateName(template.name);
-      editor?.commands.setContent(template.content);
+      setTemplateSubject(template.subject);
+      editor?.commands.setContent(template.body);
     }
   };
 
   const handleSave = async () => {
-    if (!user || !editor || !templateName.trim()) {
-      toast.error('Please provide a template name');
+    if (!user || !editor || !templateName.trim() || !templateSubject.trim()) {
+      toast.error('Please provide a template name and subject');
       return;
     }
 
     try {
       setSaving(true);
-      const content = editor.getHTML();
+      const body = editor.getHTML();
 
       if (selectedTemplate) {
         // Update existing template
@@ -120,7 +124,8 @@ const TemplateEditor: React.FC = () => {
           .from('reminder_templates')
           .update({
             name: templateName,
-            content,
+            subject: templateSubject,
+            body,
             updated_at: new Date().toISOString()
           })
           .eq('id', selectedTemplate)
@@ -135,8 +140,9 @@ const TemplateEditor: React.FC = () => {
           .insert({
             user_id: user.id,
             name: templateName,
-            content,
-            type: 'custom'
+            subject: templateSubject,
+            body,
+            variables: {}
           });
 
         if (error) throw error;
@@ -167,6 +173,7 @@ const TemplateEditor: React.FC = () => {
       toast.success('Template deleted successfully');
       setSelectedTemplate(null);
       setTemplateName('');
+      setTemplateSubject('');
       editor?.commands.setContent('');
       await fetchTemplates();
     } catch (error) {
@@ -178,6 +185,7 @@ const TemplateEditor: React.FC = () => {
   const handleNew = () => {
     setSelectedTemplate(null);
     setTemplateName('');
+    setTemplateSubject('');
     editor?.commands.setContent('');
   };
 
@@ -215,6 +223,14 @@ const TemplateEditor: React.FC = () => {
                   onChange={(e) => setTemplateName(e.target.value)}
                   placeholder="Template name"
                   className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-2"
+                />
+
+                <input
+                  type="text"
+                  value={templateSubject}
+                  onChange={(e) => setTemplateSubject(e.target.value)}
+                  placeholder="Email subject"
+                  className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-2 flex-1"
                 />
               </div>
 

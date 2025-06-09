@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Bell, Clock, AlertCircle, CheckCircle, ChevronRight } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'sonner';
+import ReminderDetailsModal from './ReminderDetailsModal';
+import CreateReminderModal from './CreateReminderModal';
 
 interface Reminder {
   id: string;
@@ -23,14 +25,11 @@ const ReminderTimeline: React.FC = () => {
   const { user } = useAuth();
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      fetchReminders();
-    }
-  }, [user]);
-
-  const fetchReminders = async () => {
+  const fetchReminders = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -70,7 +69,13 @@ const ReminderTimeline: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchReminders();
+    }
+  }, [user, fetchReminders]);
 
   const getStatusIcon = (reminder: Reminder) => {
     const now = new Date();
@@ -133,6 +138,25 @@ const ReminderTimeline: React.FC = () => {
     }
   };
 
+  const handleReminderClick = (reminder: Reminder) => {
+    setSelectedReminder(reminder);
+    setShowDetailsModal(true);
+  };
+
+  const handleEditReminder = () => {
+    setShowDetailsModal(false);
+    setShowEditModal(true);
+  };
+
+  const handleEditSuccess = () => {
+    setShowEditModal(false);
+    fetchReminders();
+  };
+
+  const handleDeleteSuccess = () => {
+    fetchReminders();
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -154,7 +178,8 @@ const ReminderTimeline: React.FC = () => {
               key={reminder.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+              onClick={() => handleReminderClick(reminder)}
             >
               <div className="flex items-center gap-4">
                 <div className="flex-shrink-0">
@@ -190,16 +215,30 @@ const ReminderTimeline: React.FC = () => {
                 </div>
 
                 <div className="flex-shrink-0">
-                  <button className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
-                    <span className="sr-only">View reminder</span>
-                    <ChevronRight size={20} />
-                  </button>
+                  <ChevronRight size={20} className="text-gray-400" />
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
       )}
+
+      {/* Reminder Details Modal */}
+      <ReminderDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        reminder={selectedReminder}
+        onDelete={handleDeleteSuccess}
+        onEdit={handleEditReminder}
+      />
+
+      {/* Edit Reminder Modal */}
+      <CreateReminderModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSuccess={handleEditSuccess}
+        editReminder={selectedReminder}
+      />
     </div>
   );
 };

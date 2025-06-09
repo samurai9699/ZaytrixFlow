@@ -3,17 +3,25 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { EventClickArg, ViewMountArg, DateSelectArg } from '@fullcalendar/core';
+import { EventClickArg, ViewMountArg } from '@fullcalendar/core';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'sonner';
+import ReminderDetailsModal from './ReminderDetailsModal';
+import CreateReminderModal from './CreateReminderModal';
 
 interface Reminder {
   id: string;
   title: string;
+  description?: string;
   due_date: string;
   status: string;
   invoice_id?: string;
+  invoice?: {
+    id: string;
+    amount: number;
+    client_name: string;
+  };
 }
 
 const ReminderCalendar: React.FC = () => {
@@ -21,6 +29,10 @@ const ReminderCalendar: React.FC = () => {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'>('dayGridMonth');
+  const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -72,14 +84,32 @@ const ReminderCalendar: React.FC = () => {
   const handleEventClick = (info: EventClickArg) => {
     const reminder = reminders.find(r => r.id === info.event.id);
     if (reminder) {
-      // TODO: Show reminder details modal
-      console.log('Clicked reminder:', reminder);
+      setSelectedReminder(reminder);
+      setShowDetailsModal(true);
     }
   };
 
-  const handleDateSelect = (selectInfo: DateSelectArg) => {
-    // TODO: Open create reminder modal with pre-filled date
-    console.log('Selected date:', selectInfo.startStr);
+  const handleDateSelect = () => {
+    setShowCreateModal(true);
+  };
+
+  const handleEditReminder = () => {
+    setShowDetailsModal(false);
+    setShowEditModal(true);
+  };
+
+  const handleEditSuccess = () => {
+    setShowEditModal(false);
+    fetchReminders();
+  };
+
+  const handleDeleteSuccess = () => {
+    fetchReminders();
+  };
+
+  const handleCreateSuccess = () => {
+    setShowCreateModal(false);
+    fetchReminders();
   };
 
   return (
@@ -115,6 +145,30 @@ const ReminderCalendar: React.FC = () => {
           />
         </div>
       )}
+
+      {/* Reminder Details Modal */}
+      <ReminderDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        reminder={selectedReminder}
+        onDelete={handleDeleteSuccess}
+        onEdit={handleEditReminder}
+      />
+
+      {/* Create Reminder Modal */}
+      <CreateReminderModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleCreateSuccess}
+      />
+
+      {/* Edit Reminder Modal */}
+      <CreateReminderModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSuccess={handleEditSuccess}
+        editReminder={selectedReminder}
+      />
     </div>
   );
 };
