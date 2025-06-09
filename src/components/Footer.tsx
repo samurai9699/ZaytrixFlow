@@ -53,7 +53,7 @@ const Footer: React.FC = () => {
                 <Instagram size={20} />
               </motion.a>
               <motion.a
-                href="https://linkedin.com/company/zaytrixflow"
+                href="https://linkedin.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
