@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Check, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { STRIPE_PRODUCTS } from '../stripe-config';
-import { useAuth } from '../contexts/AuthContext';
 
 const PRICING_PLANS = [
   {
@@ -22,10 +21,7 @@ const PRICING_PLANS = [
   {
     id: 'pro',
     title: "Pro",
-    price: { 
-      monthly: STRIPE_PRODUCTS.pro.price, 
-      annual: Math.round(STRIPE_PRODUCTS.pro.price * 12 * 0.8) 
-    },
+    price: { monthly: 8, annual: 100 },
     description: STRIPE_PRODUCTS.pro.description,
     features: [
       "Up to 20 clients",
@@ -41,10 +37,7 @@ const PRICING_PLANS = [
   {
     id: 'premium',
     title: "Premium",
-    price: { 
-      monthly: STRIPE_PRODUCTS.premium.price, 
-      annual: Math.round(STRIPE_PRODUCTS.premium.price * 12 * 0.8) 
-    },
+    price: { monthly: 15, annual: 150 },
     description: STRIPE_PRODUCTS.premium.description,
     features: [
       "Unlimited clients",
@@ -61,7 +54,6 @@ const PRICING_PLANS = [
 
 const Pricing: React.FC = () => {
   const [isAnnual, setIsAnnual] = useState(false);
-  const { user } = useAuth();
 
   return (
     <section id="pricing" className="py-16 md:py-24 bg-primary-50 dark:bg-gray-900 relative">
@@ -170,7 +162,7 @@ const Pricing: React.FC = () => {
                       ? 'bg-gradient-to-r from-primary-600 to-secondary-500 text-white shadow-lg hover:shadow-primary-500/20' 
                       : 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 hover:bg-primary-50 dark:hover:bg-primary-900/20'}`}
                 >
-                  {user ? (plan.price.monthly === 0 ? 'Get Started' : 'Subscribe Now') : plan.cta}
+                  {plan.cta}
                 </Link>
               </div>
             </motion.div>
