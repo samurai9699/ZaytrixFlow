@@ -39,7 +39,6 @@ const Hero: React.FC = () => {
                   <span className="bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent dark:from-primary-400 dark:to-secondary-300">
                     On Time, Every Time
                   </span>
-                  <span className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-primary-600 to-secondary-500 dark:from-primary-400 dark:to-secondary-300 rounded-full"></span>
                 </span>
               </h1>
 
