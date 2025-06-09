@@ -3,7 +3,6 @@ export interface StripeProduct {
   name: string;
   description: string;
   mode: 'payment' | 'subscription';
-  price: number;
 }
 
 export const STRIPE_PRODUCTS: Record<string, StripeProduct> = {
@@ -12,14 +11,12 @@ export const STRIPE_PRODUCTS: Record<string, StripeProduct> = {
     name: 'Pro',
     description: 'Everything you need for growing your business',
     mode: 'subscription',
-    price: 8,
   },
   premium: {
     priceId: 'price_1RX7RLDnl7eA7o2ImjEdcoOa',
     name: 'Premium',
-    description: 'For established freelancers with complex needs',
+    description: 'For established freelancers with complex needs.',
     mode: 'subscription',
-    price: 15,
   },
 };
 
