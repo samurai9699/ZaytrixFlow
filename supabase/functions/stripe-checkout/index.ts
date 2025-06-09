@@ -1,6 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import Stripe from 'https://esm.sh/stripe@17.7.0?dts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
+import Stripe from 'npm:stripe@17.7.0';
+import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
 
 const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
 const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
@@ -195,17 +195,16 @@ Deno.serve(async (req) => {
     console.log(`Created checkout session ${session.id} for customer ${customerId}`);
 
     return corsResponse({ sessionId: session.id, url: session.url });
-  } catch (error: unknown) {
-    console.error(`Checkout error:`, error);
-    const message = error instanceof Error ? error.message : 'An unknown error occurred';
-    return corsResponse({ error: message }, 500);
+  } catch (error: any) {
+    console.error(`Checkout error: ${error.message}`);
+    return corsResponse({ error: error.message }, 500);
   }
 });
 
 type ExpectedType = 'string' | { values: string[] };
 type Expectations<T> = { [K in keyof T]: ExpectedType };
 
-function validateParameters<T extends Record<string, string>>(values: T, expected: Expectations<T>): string | undefined {
+function validateParameters<T extends Record<string, any>>(values: T, expected: Expectations<T>): string | undefined {
   for (const parameter in values) {
     const expectation = expected[parameter];
     const value = values[parameter];
