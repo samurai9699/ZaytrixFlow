@@ -49,6 +49,11 @@ async function getPayPalAccessToken(): Promise<string> {
     return data.access_token;
 }
 
+interface PayPalLink {
+    rel: string;
+    href: string;
+}
+
 Deno.serve(async (req) => {
     try {
         if (req.method === 'OPTIONS') {
@@ -139,15 +144,16 @@ Deno.serve(async (req) => {
         }
 
         // Return the PayPal approval URL
-        const approvalUrl = orderData.links.find((link: any) => link.rel === 'approve')?.href;
+        const approvalUrl = orderData.links.find((link: PayPalLink) => link.rel === 'approve')?.href;
         if (!approvalUrl) {
             return corsResponse({ error: 'No approval URL found in PayPal response' }, 500);
         }
 
         return corsResponse({ url: approvalUrl });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('PayPal checkout error:', error);
-        return corsResponse({ error: error.message }, 500);
+        const message = error instanceof Error ? error.message : 'An unknown error occurred';
+        return corsResponse({ error: message }, 500);
     }
 });
 
