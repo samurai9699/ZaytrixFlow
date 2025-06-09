@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Bell, Palette, Key, LogOut, Shield } from 'lucide-react';
+import { User, Bell, Palette, Key, Shield, Puzzle } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import ProfileSettings from './ProfileSettings';
 import NotificationSettings from './NotificationSettings';
 import ThemeSettings from './ThemeSettings';
 import ApiKeySettings from './ApiKeySettings';
 import SecuritySettings from './SecuritySettings';
+import IntegrationsSettings from './IntegrationsSettings';
 
 const SETTINGS_TABS = [
   {
@@ -27,6 +29,12 @@ const SETTINGS_TABS = [
     component: ThemeSettings,
   },
   {
+    id: 'integrations',
+    label: 'Integrations',
+    icon: Puzzle,
+    component: IntegrationsSettings,
+  },
+  {
     id: 'api',
     label: 'API Keys',
     icon: Key,
@@ -41,7 +49,20 @@ const SETTINGS_TABS = [
 ];
 
 const SettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('profile');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && SETTINGS_TABS.some(t => t.id === tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    setSearchParams({ tab: tabId });
+  };
 
   const ActiveComponent = SETTINGS_TABS.find(tab => tab.id === activeTab)?.component || ProfileSettings;
 
@@ -65,12 +86,11 @@ const SettingsPage: React.FC = () => {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
-                      activeTab === tab.id
-                        ? 'bg-gradient-to-r from-primary-500/10 to-secondary-500/10 text-primary-600 dark:text-primary-400 shadow-sm'
-                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
-                    }`}
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${activeTab === tab.id
+                      ? 'bg-gradient-to-r from-primary-500/10 to-secondary-500/10 text-primary-600 dark:text-primary-400 shadow-sm'
+                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                      }`}
                   >
                     <Icon size={20} />
                     <span className="font-medium">{tab.label}</span>
