@@ -33,7 +33,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  
+
   // Form state
   const [title, setTitle] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -93,7 +93,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast.error('You must be logged in to create a reminder');
       return;
@@ -106,45 +106,15 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
     try {
       setLoading(true);
 
-      // For now, we'll store reminders in the user_preferences table as metadata
-      // In a real app, you'd want a dedicated reminders table
-      const reminderData = {
-        id: crypto.randomUUID(),
-        title: title.trim(),
-        due_date: dueDate,
-        notes: notes.trim() || null,
-        invoice_id: selectedInvoiceId || null,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      };
-
-      // Get existing reminders
-      const { data: existingPrefs, error: fetchError } = await supabase
-        .from('user_preferences')
-        .select('metadata')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        throw fetchError;
-      }
-
-      const existingMetadata = existingPrefs?.metadata || {};
-      const existingReminders = existingMetadata.reminders || [];
-      const updatedReminders = [...existingReminders, reminderData];
-
-      // Update user preferences with new reminder
       const { error } = await supabase
-        .from('user_preferences')
-        .upsert({
+        .from('reminders')
+        .insert({
           user_id: user.id,
-          metadata: {
-            ...existingMetadata,
-            reminders: updatedReminders,
-          },
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id'
+          title: title.trim(),
+          description: notes.trim() || null,
+          due_date: dueDate,
+          invoice_id: selectedInvoiceId || null,
+          status: 'pending',
         });
 
       if (error) throw error;
@@ -152,7 +122,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
       toast.success('Reminder created successfully!');
       resetForm();
       onSuccess();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating reminder:', error);
       toast.error('Failed to create reminder. Please try again.');
     } finally {
@@ -222,9 +192,8 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className={`w-full pl-10 pr-4 py-2 rounded-lg border ${
-                      errors.title ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
-                    } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800`}
+                    className={`w-full pl-10 pr-4 py-2 rounded-lg border ${errors.title ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
+                      } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800`}
                     placeholder="Payment reminder for..."
                   />
                   <FileText className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -243,9 +212,8 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className={`w-full pl-10 pr-4 py-2 rounded-lg border ${
-                      errors.due_date ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
-                    } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800`}
+                    className={`w-full pl-10 pr-4 py-2 rounded-lg border ${errors.due_date ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
+                      } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800`}
                   />
                   <Calendar className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                 </div>
