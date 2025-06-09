@@ -23,7 +23,7 @@ const Footer: React.FC = () => {
             </p>
             <div className="flex space-x-4">
               <motion.a
-                href="https://facebook.com/zaytrixflow"
+                href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
@@ -33,7 +33,7 @@ const Footer: React.FC = () => {
                 <Facebook size={20} />
               </motion.a>
               <motion.a
-                href="https://twitter.com/zaytrixflow"
+                href="https://twitter.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
@@ -43,7 +43,7 @@ const Footer: React.FC = () => {
                 <Twitter size={20} />
               </motion.a>
               <motion.a
-                href="https://instagram.com/zaytrixflow"
+                href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
