@@ -44,7 +44,7 @@ const Footer: React.FC = () => {
                 <Instagram size={20} />
               </motion.a>
               <motion.a
-                href="#"
+                href="https://www.instagram.com/"
                 className="text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 whileHover={{ y: -3 }}
               >
