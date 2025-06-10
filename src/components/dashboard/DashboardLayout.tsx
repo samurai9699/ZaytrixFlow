@@ -333,14 +333,14 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                 <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
               </div>
 
-              /* <button className="relative p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors">
+              {/* <button className="relative p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors">
                 <Bell size={20} />
                 {notifications > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary-500 text-white text-xs rounded-full flex items-center justify-center">
                     {notifications}
                   </span>
                 )}
-              </button> */
+              </button> */}
 
               <div className="relative">
                 <button
