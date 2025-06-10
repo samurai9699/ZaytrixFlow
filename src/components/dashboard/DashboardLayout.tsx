@@ -323,15 +323,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
-              /* <div className="relative hidden md:block">
-                <input
-                  type="text"
-                  placeholder="Search invoices, clients..."
-                  className="w-64 px-4 py-2 pl-10 rounded-lg bg-gray-100/50 dark:bg-gray-700/50 border border-gray-200/50 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 backdrop-blur-sm"
-                />
-                <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-              </div> */
+            
 
               <div className="relative">
                 <button
