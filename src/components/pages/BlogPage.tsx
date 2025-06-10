@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, User, ExternalLink, Mail, X, CheckCircle, Loader2 } from 'lucide-react';
+import { Calendar, Clock, User, ExternalLink, Mail, X, CheckCircle } from 'lucide-react';
+import Navbar from '../Navbar';
+import Footer from '../Footer';
 
 const BLOG_POSTS = [
   {
@@ -32,97 +34,23 @@ const BLOG_POSTS = [
   }
 ];
 
-// Skeleton component for blog post loading
-const BlogPostSkeleton = () => (
-  <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl overflow-hidden shadow-xl border border-gray-200/50 dark:border-gray-700/50 animate-pulse">
-    <div className="bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 w-full h-64" />
-    <div className="p-8">
-      <div className="h-8 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-lg mb-4" />
-      <div className="space-y-3 mb-8">
-        <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded w-full" />
-        <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded w-3/4" />
-      </div>
-      <div className="flex gap-6 mb-6">
-        <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded w-20" />
-        <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded w-24" />
-        <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded w-16" />
-      </div>
-      <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-        <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded w-32" />
-      </div>
-    </div>
-  </div>
-);
-
-// Image component with loading state
-const BlogPostImage = ({ src, alt, className }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
-
-  return (
-    <div className="relative overflow-hidden">
-      {!isLoaded && !hasError && (
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 animate-pulse flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-        </div>
-      )}
-      
-      {hasError && (
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
-          <div className="text-gray-500 dark:text-gray-400 text-center">
-            <div className="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-lg mx-auto mb-2" />
-            <p className="text-sm">Image unavailable</p>
-          </div>
-        </div>
-      )}
-      
-      <img 
-        src={src} 
-        alt={alt}
-        className={`${className} transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-        onLoad={() => setIsLoaded(true)}
-        onError={() => setHasError(true)}
-        loading="lazy"
-      />
-      
-      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent group-hover:from-black/30 transition-colors duration-300" />
-    </div>
-  );
-};
-
-const BlogPage = () => {
+const BlogPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [visiblePosts, setVisiblePosts] = useState([]);
 
-  // Simulate content loading with staggered appearance
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-
-    // Stagger the appearance of blog posts
-    BLOG_POSTS.forEach((post, index) => {
-      setTimeout(() => {
-        setVisiblePosts(prev => [...prev, post]);
-      }, 1000 + (index * 200));
-    });
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handlePostClick = (url) => {
+  const handlePostClick = (url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const validateEmail = (email) => {
+  const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const handleNewsletterSubmit = () => {
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (!email.trim()) {
       setEmailError('Email is required');
       return;
@@ -137,6 +65,7 @@ const BlogPage = () => {
     setShowSuccessPopup(true);
     setEmail('');
     
+    // Hide popup after 3 seconds
     setTimeout(() => {
       setShowSuccessPopup(false);
     }, 3000);
@@ -147,37 +76,9 @@ const BlogPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-gray-900 dark:to-indigo-950 transition-colors duration-500">
-      {/* Loading Overlay */}
-      <AnimatePresence>
-        {isLoading && (
-          <motion.div
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6 }}
-            className="fixed inset-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-gray-900 dark:to-indigo-950 z-50 flex items-center justify-center"
-          >
-            <div className="text-center">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="inline-block"
-              >
-                <Loader2 className="w-12 h-12 text-blue-600 dark:text-blue-400" />
-              </motion.div>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="mt-4 text-lg font-medium text-gray-700 dark:text-gray-300"
-              >
-                Loading amazing content...
-              </motion.p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <Navbar />
+      
       {/* Success Popup */}
       <AnimatePresence>
         {showSuccessPopup && (
@@ -213,7 +114,7 @@ const BlogPage = () => {
                 
                 <button
                   onClick={closeSuccessPopup}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  className="px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                 >
                   Continue Reading
                 </button>
@@ -234,15 +135,15 @@ const BlogPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.5 }}
           className="max-w-4xl mx-auto"
         >
           <div className="text-center mb-16">
             <motion.h1 
-              className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent"
+              className="text-4xl md:text-5xl font-bold font-heading mb-6 bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.8 }}
+              transition={{ delay: 0.2 }}
             >
               ZaytrixFlow Blog
             </motion.h1>
@@ -250,59 +151,40 @@ const BlogPage = () => {
               className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.8 }}
+              transition={{ delay: 0.3 }}
             >
               Insights and tips for better freelance payment management
             </motion.p>
           </div>
 
           <div className="space-y-12">
-            {/* Show skeletons while loading */}
-            {isLoading && (
-              <>
-                {[...Array(3)].map((_, index) => (
-                  <motion.div
-                    key={`skeleton-${index}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.2 }}
-                  >
-                    <BlogPostSkeleton />
-                  </motion.div>
-                ))}
-              </>
-            )}
-
-            {/* Show actual posts as they become visible */}
-            {visiblePosts.map((post, index) => (
+            {BLOG_POSTS.map((post, index) => (
               <motion.article
                 key={index}
-                className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl overflow-hidden shadow-xl border border-gray-200/50 dark:border-gray-700/50 cursor-pointer group transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1"
-                initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ 
-                  duration: 0.6,
-                  type: "spring",
-                  stiffness: 100,
-                  damping: 20
-                }}
+                className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl overflow-hidden shadow-xl border border-gray-200/50 dark:border-gray-700/50 cursor-pointer group transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 * (index + 1) }}
                 onClick={() => handlePostClick(post.url)}
               >
-                <BlogPostImage
-                  src={post.image}
-                  alt={post.title}
-                  className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                
-                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                  <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-full p-3 shadow-lg border border-white/20">
-                    <ExternalLink className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <div className="relative overflow-hidden">
+                  <img 
+                    src={post.image} 
+                    alt={post.title}
+                    className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent group-hover:from-black/30 transition-colors duration-300" />
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                    <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-full p-3 shadow-lg border border-white/20">
+                      <ExternalLink className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    </div>
                   </div>
                 </div>
                 
                 <div className="p-8">
                   <div className="flex items-start justify-between mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 leading-tight">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-300 leading-tight">
                       {post.title}
                     </h2>
                   </div>
@@ -328,10 +210,10 @@ const BlogPage = () => {
                   
                   <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
                     <div className="flex items-center justify-between">
-                      <span className="text-base font-semibold text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors duration-300">
+                      <span className="text-base font-semibold text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors duration-300">
                         Read Full Article
                       </span>
-                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-all duration-300 transform group-hover:translate-x-1">
+                      <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-all duration-300 transform group-hover:translate-x-1">
                         <span className="text-sm font-medium">Continue Reading</span>
                         <ExternalLink className="w-4 h-4" />
                       </div>
@@ -345,13 +227,13 @@ const BlogPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 2.5, duration: 0.8 }}
+            transition={{ delay: 0.8 }}
             className="text-center mt-20"
           >
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 backdrop-blur-xl rounded-3xl p-12 border border-blue-200/50 dark:border-blue-700/50 shadow-xl">
+            <div className="bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 backdrop-blur-xl rounded-3xl p-12 border border-primary-200/50 dark:border-primary-700/50 shadow-xl">
               <div className="max-w-md mx-auto">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/50 mb-6">
-                  <Mail className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/50 mb-6">
+                  <Mail className="w-8 h-8 text-primary-600 dark:text-primary-400" />
                 </div>
                 
                 <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
@@ -361,7 +243,7 @@ const BlogPage = () => {
                   Get the latest freelance tips, payment strategies, and industry insights delivered straight to your inbox
                 </p>
                 
-                <div className="space-y-4">
+                <form onSubmit={handleNewsletterSubmit} className="space-y-4">
                   <div>
                     <input
                       type="email"
@@ -370,7 +252,7 @@ const BlogPage = () => {
                       placeholder="Enter your email address"
                       className={`w-full px-6 py-4 rounded-xl border ${
                         emailError ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
-                      } focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors text-lg`}
+                      } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors text-lg`}
                     />
                     {emailError && (
                       <p className="mt-2 text-sm text-red-500 text-left">{emailError}</p>
@@ -378,14 +260,14 @@ const BlogPage = () => {
                   </div>
                   
                   <motion.button
-                    onClick={handleNewsletterSubmit}
-                    className="w-full px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg hover:shadow-xl"
+                    type="submit"
+                    className="w-full px-8 py-4 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-xl font-semibold text-lg hover:from-primary-700 hover:to-secondary-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 shadow-lg hover:shadow-xl"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
                     Subscribe to Newsletter
                   </motion.button>
-                </div>
+                </form>
                 
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
                   No spam, unsubscribe at any time. We respect your privacy.
@@ -395,6 +277,8 @@ const BlogPage = () => {
           </motion.div>
         </motion.div>
       </main>
+
+      <Footer />
     </div>
   );
 };
