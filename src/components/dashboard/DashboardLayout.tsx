@@ -12,10 +12,10 @@ import {
   Zap
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from 'Harper';
-import { useTheme } from 'context';
-import { supabase } from 'subbase';
-import { getProductByPriceId } from 'string';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { supabase } from '../../lib/supabase';
+import { getProductByPriceId } from '../../stripe-config';
 
 interface SidebarItem {
   icon: React.ReactNode;
