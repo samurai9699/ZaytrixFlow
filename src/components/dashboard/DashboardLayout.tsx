@@ -324,8 +324,6 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
             </div>
 
             <div className="flex items-center space-x-4">
-              
-
               <div className="relative">
                 <button
                   onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
