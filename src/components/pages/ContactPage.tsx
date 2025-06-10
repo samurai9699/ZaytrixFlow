@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, MapPin, Phone } from 'lucide-react';
+import { Mail, MapPin, Phone, CheckCircle, ArrowLeft } from 'lucide-react';
 import Navbar from '../Navbar';
 import Footer from '../Footer';
 
@@ -13,6 +13,7 @@ const ContactPage: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -25,6 +26,10 @@ const ContactPage: React.FC = () => {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Invalid email address';
+    }
+
+    if (!formData.subject.trim()) {
+      newErrors.subject = 'Subject is required';
     }
 
     if (!formData.message.trim()) {
@@ -40,7 +45,19 @@ const ContactPage: React.FC = () => {
     if (validateForm()) {
       // Handle form submission
       console.log('Form submitted:', formData);
+      setIsSubmitted(true);
     }
+  };
+
+  const handleNewMessage = () => {
+    setIsSubmitted(false);
+    setFormData({
+      name: '',
+      email: '',
+      subject: '',
+      message: ''
+    });
+    setErrors({});
   };
 
   return (
@@ -80,81 +97,143 @@ const ContactPage: React.FC = () => {
               transition={{ delay: 0.4 }}
             >
               <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700">
-                <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Get in Touch</h2>
-                
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className={`w-full px-4 py-2 rounded-lg border ${
-                        errors.name ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
-                      } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800`}
-                    />
-                    {errors.name && (
-                      <p className="mt-1 text-sm text-error-500">{errors.name}</p>
-                    )}
-                  </div>
+                {!isSubmitted ? (
+                  <>
+                    <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Get in Touch</h2>
+                    
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className={`w-full px-4 py-2 rounded-lg border ${
+                            errors.name ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
+                          } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors`}
+                          placeholder="Enter your full name"
+                        />
+                        {errors.name && (
+                          <p className="mt-1 text-sm text-error-500">{errors.name}</p>
+                        )}
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className={`w-full px-4 py-2 rounded-lg border ${
-                        errors.email ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
-                      } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800`}
-                    />
-                    {errors.email && (
-                      <p className="mt-1 text-sm text-error-500">{errors.email}</p>
-                    )}
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Email *
+                        </label>
+                        <input
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className={`w-full px-4 py-2 rounded-lg border ${
+                            errors.email ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
+                          } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors`}
+                          placeholder="your.email@example.com"
+                        />
+                        {errors.email && (
+                          <p className="mt-1 text-sm text-error-500">{errors.email}</p>
+                        )}
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Subject
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.subject}
-                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800"
-                    />
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Subject *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.subject}
+                          onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                          className={`w-full px-4 py-2 rounded-lg border ${
+                            errors.subject ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
+                          } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors`}
+                          placeholder="What is this about?"
+                        />
+                        {errors.subject && (
+                          <p className="mt-1 text-sm text-error-500">{errors.subject}</p>
+                        )}
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Message
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      className={`w-full px-4 py-2 rounded-lg border ${
-                        errors.message ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
-                      } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800`}
-                    />
-                    {errors.message && (
-                      <p className="mt-1 text-sm text-error-500">{errors.message}</p>
-                    )}
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Message *
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={formData.message}
+                          onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                          className={`w-full px-4 py-2 rounded-lg border ${
+                            errors.message ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
+                          } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors resize-none`}
+                          placeholder="Tell us more about your inquiry..."
+                        />
+                        {errors.message && (
+                          <p className="mt-1 text-sm text-error-500">{errors.message}</p>
+                        )}
+                      </div>
 
-                  <motion.button
-                    type="submit"
-                    className="w-full px-6 py-3 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                      <motion.button
+                        type="submit"
+                        className="w-full px-6 py-3 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        Send Message
+                      </motion.button>
+                    </form>
+                  </>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-center py-8"
                   >
-                    Send Message
-                  </motion.button>
-                </form>
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                      className="mb-6"
+                    >
+                      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
+                        <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
+                      </div>
+                    </motion.div>
+                    
+                    <motion.h2
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="text-3xl font-bold text-gray-900 dark:text-white mb-4"
+                    >
+                      Message Received!
+                    </motion.h2>
+                    
+                    <motion.p
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                      className="text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed"
+                    >
+                      Thank you for reaching out to us! We've received your message and will get back to you within 24 hours.
+                    </motion.p>
+                    
+                    <motion.button
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                      onClick={handleNewMessage}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      Send Another Message
+                    </motion.button>
+                  </motion.div>
+                )}
               </div>
             </motion.div>
 
