@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ChevronLeft,
-  ChevronRight,
-  User,
-  Crown,
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Bell, 
+  Search,
+  Home,
+  FileText,
+  Users,
   Settings,
   LogOut,
   Menu,
   X,
+  User,
+  Crown,
+  BarChart3,
+  BellRing,
   Zap
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -46,15 +53,18 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
   useEffect(() => {
     const fetchSubscription = async () => {
       if (!user) return;
+
       try {
         const { data, error } = await supabase
           .from('stripe_user_subscriptions')
           .select('price_id, subscription_status')
           .maybeSingle();
+
         if (error) {
           console.error('Error fetching subscription:', error);
           return;
         }
+
         if (data?.price_id && data.subscription_status === 'active') {
           const product = getProductByPriceId(data.price_id);
           setSubscriptionPlan(product?.name || 'Unknown Plan');
@@ -66,6 +76,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
         setSubscriptionPlan('Free');
       }
     };
+
     fetchSubscription();
   }, [user]);
 
@@ -126,19 +137,17 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
           {/* Subscription Status */}
           {!isCollapsed && subscriptionPlan && (
             <div className="px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50">
-              <div
-                className={`p-3 rounded-lg ${
-                  subscriptionPlan === 'Free'
-                    ? 'bg-gray-100 dark:bg-gray-700'
-                    : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 border border-primary-200/30 dark:border-primary-800/30'
-                }`}
-              >
+              <div className={`p-3 rounded-lg ${
+                subscriptionPlan === 'Free' 
+                  ? 'bg-gray-100 dark:bg-gray-700' 
+                  : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 border border-primary-200/30 dark:border-primary-800/30'
+              }`}>
                 <div className="flex items-center gap-2">
                   {subscriptionPlan !== 'Free' && (
                     <Crown className="h-4 w-4 text-primary-600 dark:text-primary-400" />
                   )}
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {subscriptionPlan}
+                    {subscriptionPlan} Plan
                   </span>
                 </div>
                 {subscriptionPlan === 'Free' && (
@@ -168,12 +177,14 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                 >
                   <span className="flex-shrink-0">{item.icon}</span>
                   {!isCollapsed && (
-                    <span className="ml-3 font-medium">{item.label}</span>
-                  )}
-                  {item.badge && (
-                    <span className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                      {item.badge}
-                    </span>
+                    <>
+                      <span className="ml-3 font-medium">{item.label}</span>
+                      {item.badge && (
+                        <span className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                          {item.badge}
+                        </span>
+                      )}
+                    </>
                   )}
                   {location.pathname === item.path && (
                     <motion.div
@@ -225,13 +236,11 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
               {/* Mobile Subscription Status */}
               {subscriptionPlan && (
                 <div className="px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50">
-                  <div
-                    className={`p-3 rounded-lg ${
-                      subscriptionPlan === 'Free'
-                        ? 'bg-gray-100 dark:bg-gray-700'
-                        : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 border border-primary-200/30 dark:border-primary-800/30'
-                    }`}
-                  >
+                  <div className={`p-3 rounded-lg ${
+                    subscriptionPlan === 'Free' 
+                      ? 'bg-gray-100 dark:bg-gray-700' 
+                      : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 border border-primary-200/30 dark:border-primary-800/30'
+                  }`}>
                     <div className="flex items-center gap-2">
                       {subscriptionPlan !== 'Free' && (
                         <Crown className="h-4 w-4 text-primary-600 dark:text-primary-400" />
@@ -253,7 +262,6 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                 </div>
               )}
 
-              {/* Mobile Navigation */}
               <nav className="p-4">
                 <div className="space-y-2">
                   {sidebarItems.map((item) => (
@@ -290,68 +298,103 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
         }`}
       >
         {/* Top navigation */}
-        <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm p-4 flex items-center justify-between">
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors lg:hidden"
-          >
-            <Menu size={20} />
-          </button>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {getPageTitle()}
-          </h1>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
+        <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-20">
+          <div className="flex items-center justify-between h-16 px-6">
+            <div className="flex items-center gap-4">
               <button
-                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 lg:hidden"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center">
-                  <User size={16} className="text-white" />
-                </div>
-                <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {user?.email?.split('@')[0] || 'User'}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {subscriptionPlan} Plan
-                  </p>
-                </div>
+                <Menu size={20} />
               </button>
-              <AnimatePresence>
-                {isProfileDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-48 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50 py-1"
-                  >
-                    <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {user?.email}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {subscriptionPlan} Plan
-                      </p>
-                    </div>
-                    <Link
-                      to="/dashboard/settings"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
-                      onClick={() => setIsProfileDropdownOpen(false)}
-                    >
-                      <Settings size={16} className="mr-2" />
-                      Settings
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
-                    >
-                      <LogOut size={16} className="mr-2" />
-                      Sign out
-                    </button>
-                  </motion.div>
+
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {getPageTitle()}
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {new Date().toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="relative hidden md:block">
+                <input
+                  type="text"
+                  placeholder="Search invoices, clients..."
+                  className="w-64 px-4 py-2 pl-10 rounded-lg bg-gray-100/50 dark:bg-gray-700/50 border border-gray-200/50 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 backdrop-blur-sm"
+                />
+                <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+              </div>
+
+              /* <button className="relative p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors">
+                <Bell size={20} />
+                {notifications > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary-500 text-white text-xs rounded-full flex items-center justify-center">
+                    {notifications}
+                  </span>
                 )}
-              </AnimatePresence>
+              </button> */
+
+              <div className="relative">
+                <button
+                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center">
+                    <User size={16} className="text-white" />
+                  </div>
+                  <div className="hidden md:block text-left">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      {user?.email?.split('@')[0] || 'User'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {subscriptionPlan} Plan
+                    </p>
+                  </div>
+                </button>
+
+                <AnimatePresence>
+                  {isProfileDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-2 w-48 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50 py-1"
+                    >
+                      <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {user?.email}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {subscriptionPlan} Plan
+                        </p>
+                      </div>
+                      <Link
+                        to="/dashboard/settings"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                      >
+                        <Settings size={16} className="mr-2" />
+                        Settings
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
+                      >
+                        <LogOut size={16} className="mr-2" />
+                        Sign out
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </header>
