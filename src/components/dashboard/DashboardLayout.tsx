@@ -324,7 +324,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
             </div>
 
             <div className="flex items-center space-x-4">
-              {/* <div className="relative hidden md:block">
+              /* <div className="relative hidden md:block">
                 <input
                   type="text"
                   placeholder="Search invoices, clients..."
