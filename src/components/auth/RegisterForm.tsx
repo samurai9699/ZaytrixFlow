@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
-import { toast } from 'sonner';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Eye, EyeOff, Mail, User } from 'lucide-react';
 import { z } from 'zod';
 import AuthLayout from './AuthLayout';
 import { useAuth } from '../../contexts/AuthContext';
@@ -22,6 +21,10 @@ const RegisterForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Get the redirect path from URL params, default to dashboard
+  const redirect = searchParams.get('redirect') || '/dashboard';
 
   const validateForm = () => {
     try {
@@ -49,7 +52,8 @@ const RegisterForm: React.FC = () => {
     try {
       setIsLoading(true);
       await register(email, password, name);
-      navigate('/dashboard');
+      // Navigate to the redirect URL after successful registration
+      navigate(redirect, { replace: true });
     } catch (error) {
       console.error('Registration error:', error);
     } finally {
@@ -59,8 +63,8 @@ const RegisterForm: React.FC = () => {
 
   return (
     <AuthLayout
-      title="Create your account"
-      subtitle="Start managing your invoices today"
+      title="Create an account"
+      subtitle="Sign up to get started with our service"
     >
       <div className="p-6 sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -182,7 +186,7 @@ const RegisterForm: React.FC = () => {
           <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
             Already have an account?{' '}
             <Link
-              to="/login"
+              to={`/login${redirect !== '/dashboard' ? `?redirect=${redirect}` : ''}`}
               className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
             >
               Sign in
