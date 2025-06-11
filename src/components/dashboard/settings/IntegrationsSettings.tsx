@@ -34,24 +34,15 @@ const AVAILABLE_INTEGRATIONS = [
         requiredScopes: ['accounting', 'payments']
     },
     {
-        id: 'paypal',
-        name: 'PayPal',
-        description: 'Accept payments globally with PayPal\'s secure payment processing.',
-        features: [
-            'Multiple currency support',
-            'Instant transfers',
-            'Subscription billing'
-        ],
-        requiredScopes: ['payments']
-    },
-    {
         id: 'stripe',
         name: 'Stripe',
         description: 'Process credit card payments securely with Stripe\'s payment platform.',
         features: [
             'Secure card processing',
             'Automated receipts',
-            'Payment analytics'
+            'Payment analytics',
+            'Subscription management',
+            'Smart retries for failed payments'
         ],
         requiredScopes: ['payments']
     }
