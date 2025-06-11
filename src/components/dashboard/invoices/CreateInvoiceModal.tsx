@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Trash2, User, Calendar, DollarSign, FileText, Loader2 } from 'lucide-react';
+import { X, Plus, Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../lib/supabase';
@@ -222,6 +222,15 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     try {
       setLoading(true);
 
+      // First, check if a client with this name and email exists
+      const { data: existingClient } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('name', clientName.trim())
+        .eq('email', clientEmail.trim())
+        .single();
+
       // Prepare line items data
       const validLineItems = lineItems.filter(item => 
         item.description.trim() !== '' && 
@@ -233,6 +242,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         user_id: user.id,
         client_name: clientName.trim(),
         client_email: clientEmail.trim(),
+        client_id: existingClient?.id || null, // Set client_id if client exists
         invoice_number: invoiceNumber.trim(),
         amount: calculateTotal(),
         currency: 'USD',
