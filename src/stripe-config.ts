@@ -1,25 +1,27 @@
 export interface StripeProduct {
-  priceId: string;
   name: string;
   description: string;
-  mode: 'payment' | 'subscription';
+  monthlyPriceId: string;
+  annualPriceId: string;
 }
 
 export const STRIPE_PRODUCTS: Record<string, StripeProduct> = {
   pro: {
-    priceId: 'price_1RX7OODnl7eA7o2ILPyqAk3r',
     name: 'Pro',
     description: 'Everything you need for growing your business',
-    mode: 'subscription',
+    monthlyPriceId: 'price_1RX7OODnl7eA7o2ILPyqAk3r',
+    annualPriceId: 'price_1RX7OODnl7eA7o2ILPyqAk3s'
   },
   premium: {
-    priceId: 'price_1RX7RLDnl7eA7o2ImjEdcoOa',
     name: 'Premium',
     description: 'For established freelancers with complex needs.',
-    mode: 'subscription',
+    monthlyPriceId: 'price_1RX7RLDnl7eA7o2ImjEdcoOa',
+    annualPriceId: 'price_1RX7RLDnl7eA7o2ImjEdcoOb'
   },
 };
 
 export const getProductByPriceId = (priceId: string): StripeProduct | undefined => {
-  return Object.values(STRIPE_PRODUCTS).find(product => product.priceId === priceId);
+  return Object.values(STRIPE_PRODUCTS).find(
+    product => product.monthlyPriceId === priceId || product.annualPriceId === priceId
+  );
 };
