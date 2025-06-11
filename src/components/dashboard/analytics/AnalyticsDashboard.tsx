@@ -10,7 +10,7 @@ import ClientRisk from './widgets/ClientRisk';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import 'react-grid-layout/css/styles.css';
-import { RevenueForecastEngine } from '../../../lib/forecasting/revenueForecasting';
+import { RevenueForecastEngine } from '../../../../lib/forecasting/revenueForecasting';
 
 interface Invoice {
   id: string;
