@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
-import { toast } from 'sonner';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { Eye, EyeOff, Mail } from 'lucide-react';
 import { z } from 'zod';
 import AuthLayout from './AuthLayout';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,9 +20,10 @@ const LoginForm: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
-  // Get the redirect path from location state, default to dashboard
-  const from = location.state?.from || '/dashboard';
+  // Get the redirect path from URL params or location state, default to dashboard
+  const redirect = searchParams.get('redirect') || location.state?.from || '/dashboard';
 
   const validateForm = () => {
     try {
@@ -51,8 +51,8 @@ const LoginForm: React.FC = () => {
     try {
       setIsLoading(true);
       await login(email, password);
-      // Use navigate with replace to avoid the security error
-      navigate(from, { replace: true });
+      // Navigate to the redirect URL after successful login
+      navigate(redirect, { replace: true });
     } catch (error) {
       console.error('Login error:', error);
     } finally {
