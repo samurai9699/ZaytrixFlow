@@ -10,10 +10,8 @@ import {
   FileText, 
   Mail, 
   Phone, 
-  Building,
   User,
-  Calendar,
-  DollarSign
+  Calendar
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
@@ -102,11 +100,12 @@ const ClientList: React.FC = () => {
       // Fetch invoice statistics for each client
       const clientsWithStats = await Promise.all(
         (clientsData || []).map(async (client) => {
+          // Get invoices that either have the client_id set or match the client's name and email
           const { data: invoiceStats, error: statsError } = await supabase
             .from('invoices')
             .select('amount, created_at')
             .eq('user_id', user.id)
-            .eq('client_id', client.id);
+            .or(`client_id.eq.${client.id},and(client_name.eq.${client.name},client_email.eq.${client.email})`);
 
           if (statsError) {
             console.error('Error fetching invoice stats:', statsError);
