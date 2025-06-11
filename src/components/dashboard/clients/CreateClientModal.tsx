@@ -80,13 +80,27 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ isOpen, onClose, 
         address: address.trim() || null,
       };
 
-      const { data, error } = await supabase
+      // Create the new client
+      const { data: newClient, error: clientError } = await supabase
         .from('clients')
         .insert([clientData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (clientError) throw clientError;
+
+      // Update existing invoices that match this client's name and email
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({ client_id: newClient.id })
+        .eq('user_id', user.id)
+        .eq('client_name', name.trim())
+        .eq('client_email', email.trim());
+
+      if (updateError) {
+        console.error('Error updating existing invoices:', updateError);
+        // Don't throw error here, as the client was still created successfully
+      }
 
       toast.success('Client created successfully!');
       resetForm();
