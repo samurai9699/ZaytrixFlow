@@ -36,8 +36,10 @@ const CheckoutPage: React.FC = () => {
       }
 
       if (!user) {
-        toast.error('Please log in to continue with checkout');
-        navigate('/login');
+        // Store checkout parameters in the URL when redirecting to login
+        const loginRedirectUrl = `/login?redirect=/checkout/${planId}${billingCycle === 'annual' ? '?billing=annual' : ''}`;
+        toast.error('Please log in or create an account to start your free trial');
+        navigate(loginRedirectUrl);
         return;
       }
 
@@ -83,7 +85,7 @@ const CheckoutPage: React.FC = () => {
     };
 
     initializeCheckout();
-  }, [user, plan, billingCycle, navigate]);
+  }, [user, plan, billingCycle, navigate, planId]);
 
   if (!plan) {
     navigate('/');
