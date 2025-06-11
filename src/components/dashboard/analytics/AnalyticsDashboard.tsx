@@ -10,6 +10,7 @@ import ClientRisk from './widgets/ClientRisk';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import 'react-grid-layout/css/styles.css';
+import { RevenueForecastEngine } from '../../../lib/forecasting/revenueForecasting';
 
 interface Invoice {
   id: string;
@@ -49,6 +50,7 @@ interface RevenueForecastData {
   forecast: number;
   lower: number;
   upper: number;
+  confidence: number;
 }
 
 interface ClientRiskData {
@@ -313,75 +315,47 @@ const AnalyticsDashboard: React.FC = () => {
   };
 
   const processRevenueForecast = (invoices: Invoice[]): RevenueForecastData[] => {
-    const today = new Date();
-    const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
-    const sixMonthsAhead = new Date(today.getFullYear(), today.getMonth() + 6, 0);
+    try {
+      const forecastEngine = new RevenueForecastEngine();
+      
+      // Convert invoices to the format expected by the forecast engine
+      const processedInvoices = invoices.map(inv => ({
+        amount: inv.amount,
+        due_date: inv.due_date,
+        status: inv.status,
+        is_recurring: isRecurringClient(invoices, inv.client?.id),
+        client_id: inv.client?.id
+      }));
 
-    // Group invoices by month
-    const monthlyData = new Map();
-    invoices.forEach(inv => {
-      const date = new Date(inv.due_date);
-      const key = date.toISOString().substring(0, 7); // YYYY-MM format
-      const amount = inv.amount;
+      return forecastEngine.generateForecast(processedInvoices);
+    } catch (error) {
+      console.error('Error generating revenue forecast:', error);
+      return [];
+    }
+  };
 
-      if (!monthlyData.has(key)) {
-        monthlyData.set(key, { actual: 0, total: 0 });
-      }
+  const isRecurringClient = (invoices: Invoice[], clientId?: string): boolean => {
+    if (!clientId) return false;
+    
+    // Get all invoices for this client
+    const clientInvoices = invoices.filter(inv => inv.client?.id === clientId);
+    if (clientInvoices.length < 3) return false;
 
-      const data = monthlyData.get(key);
-      data.total += amount;
-      if (inv.status === 'paid') {
-        data.actual += amount;
-      }
-    });
-
-    // Calculate average monthly growth
-    const sortedMonths = Array.from(monthlyData.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .filter(([date]) => date <= today.toISOString().substring(0, 7));
-
-    let avgGrowth = 0;
-    if (sortedMonths.length > 1) {
-      const growthRates = [];
-      for (let i = 1; i < sortedMonths.length; i++) {
-        const prev = sortedMonths[i - 1][1].total;
-        const curr = sortedMonths[i][1].total;
-        if (prev > 0) {
-          growthRates.push((curr - prev) / prev);
-        }
-      }
-      avgGrowth = growthRates.reduce((sum, rate) => sum + rate, 0) / growthRates.length;
+    // Check for regular payment patterns
+    const paymentIntervals = [];
+    for (let i = 1; i < clientInvoices.length; i++) {
+      const curr = new Date(clientInvoices[i].due_date);
+      const prev = new Date(clientInvoices[i - 1].due_date);
+      paymentIntervals.push(Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24)));
     }
 
-    // Generate forecast data
-    const forecastData: RevenueForecastData[] = [];
-    let currentDate = new Date(sixMonthsAgo);
-    let lastActual = null;
+    // Calculate the standard deviation of payment intervals
+    const mean = paymentIntervals.reduce((sum, val) => sum + val, 0) / paymentIntervals.length;
+    const variance = paymentIntervals.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / paymentIntervals.length;
+    const stdDev = Math.sqrt(variance);
 
-    while (currentDate <= sixMonthsAhead) {
-      const key = currentDate.toISOString().substring(0, 7);
-      const monthData = monthlyData.get(key);
-
-      const baseValue: number = lastActual || (monthData?.total || 50000);
-      const forecast: number = baseValue * (1 + avgGrowth);
-      const confidence = 0.2; // 20% confidence interval
-
-      forecastData.push({
-        date: key,
-        actual: currentDate <= today ? (monthData?.actual || null) : null,
-        forecast: currentDate > today ? forecast : baseValue,
-        lower: currentDate > today ? forecast * (1 - confidence) : baseValue * 0.9,
-        upper: currentDate > today ? forecast * (1 + confidence) : baseValue * 1.1
-      });
-
-      if (forecastData[forecastData.length - 1].actual !== null) {
-        lastActual = forecastData[forecastData.length - 1].actual;
-      }
-
-      currentDate.setMonth(currentDate.getMonth() + 1);
-    }
-
-    return forecastData;
+    // If standard deviation is less than 7 days, consider it recurring
+    return stdDev < 7;
   };
 
   const processClientRisk = (invoices: Invoice[]): ClientRiskData[] => {
