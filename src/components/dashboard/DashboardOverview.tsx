@@ -35,6 +35,7 @@ interface InvoiceMetrics {
   pendingAmount: number;
   upcomingAmount: number;
   paidAmount: number;
+  totalClients: number;
 }
 
 interface ChartData {
@@ -55,6 +56,7 @@ const DashboardOverview: React.FC = () => {
     pendingAmount: 0,
     upcomingAmount: 0,
     paidAmount: 0,
+    totalClients: 0
   });
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,6 +94,14 @@ const DashboardOverview: React.FC = () => {
     try {
       setLoading(true);
 
+      // Fetch client count
+      const { count: clientCount, error: clientError } = await supabase
+        .from('clients')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      if (clientError) throw clientError;
+
       // Fetch invoice metrics
       const { data: invoices, error } = await supabase
         .from('invoices')
@@ -106,16 +116,17 @@ const DashboardOverview: React.FC = () => {
         
         switch (invoice.status) {
           case 'unpaid':
-            acc.totalUnpaid++;
-            acc.unpaidAmount += amount;
+            if (new Date(invoice.due_date) < new Date()) {
+              acc.totalUnpaid++;
+              acc.unpaidAmount += amount;
+            } else {
+              acc.totalUpcoming++;
+              acc.upcomingAmount += amount;
+            }
             break;
           case 'pending':
             acc.totalPending++;
             acc.pendingAmount += amount;
-            break;
-          case 'upcoming':
-            acc.totalUpcoming++;
-            acc.upcomingAmount += amount;
             break;
           case 'paid':
             acc.totalPaid++;
@@ -132,6 +143,7 @@ const DashboardOverview: React.FC = () => {
         pendingAmount: 0,
         upcomingAmount: 0,
         paidAmount: 0,
+        totalClients: clientCount || 0
       }) || metrics;
 
       setMetrics(newMetrics);
@@ -470,7 +482,7 @@ const DashboardOverview: React.FC = () => {
               },
               {
                 label: 'Total Clients',
-                value: '12',
+                value: metrics.totalClients.toString(),
                 icon: <Users className="h-4 w-4" />,
                 color: 'text-secondary-600 dark:text-secondary-400'
               },
