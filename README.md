@@ -41,7 +41,7 @@ ZaytrixFlow automates your freelance billing workflow:
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Next.js, TailwindCSS  
+- **Frontend**: React.js, TailwindCSS  
 - **Backend**: Supabase Edge Functions  
 - **Database**: Supabase PostgreSQL with Row-Level Security (RLS)  
 - **Payments**: Stripe (Subscriptions + One-time purchases)
