@@ -12,7 +12,6 @@ import {
   LogOut,
   Menu,
   X,
-  User,
   Crown,
   BarChart3,
   BellRing,
