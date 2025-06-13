@@ -18,7 +18,7 @@ import {
   Zap
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';
 import { getProductByPriceId } from '../../stripe-config';
