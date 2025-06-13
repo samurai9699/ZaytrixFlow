@@ -115,24 +115,26 @@ const DashboardOverview: React.FC = () => {
         const amount = parseFloat(invoice.amount.toString());
         
         switch (invoice.status) {
-          case 'unpaid':
-            if (new Date(invoice.due_date) < new Date()) {
-              acc.totalUnpaid++;
-              acc.unpaidAmount += amount;
-            } else {
-              acc.totalUpcoming++;
-              acc.upcomingAmount += amount;
-            }
-            break;
-          case 'pending':
-            acc.totalPending++;
-            acc.pendingAmount += amount;
-            break;
-          case 'paid':
-            acc.totalPaid++;
-            acc.paidAmount += amount;
-            break;
-        }
+  case 'unpaid':
+    if (new Date(invoice.due_date) < new Date()) {
+      acc.totalUnpaid++;
+      acc.unpaidAmount += amount;
+    }
+    break;
+  case 'draft':
+  case 'upcoming':
+    acc.totalUpcoming++;
+    acc.upcomingAmount += amount;
+    break;
+  case 'pending':
+    acc.totalPending++;
+    acc.pendingAmount += amount;
+    break;
+  case 'paid':
+    acc.totalPaid++;
+    acc.paidAmount += amount;
+    break;
+}
         return acc;
       }, {
         totalUnpaid: 0,
