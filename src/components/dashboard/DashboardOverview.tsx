@@ -317,7 +317,7 @@ const DashboardOverview: React.FC = () => {
             amount: metrics.unpaidAmount,
             icon: <AlertCircle className="text-error-600 dark:text-error-400" />,
             change: '+2 from last month',
-            positive: false,
+            positive: true,
             gradient: 'from-error-500/10 to-error-600/10'
           },
           {
