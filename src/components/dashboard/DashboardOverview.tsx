@@ -1,7 +1,3 @@
-Pasted content
-19.83 KB •570 lines
-•
-Formatting may be inconsistent from source
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
