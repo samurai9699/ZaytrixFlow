@@ -65,7 +65,7 @@ const CheckoutPage: React.FC = () => {
           body: JSON.stringify({
             price_id: priceId,
             success_url: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${window.location.origin}/checkout/cancel`,
+            cancel_url: `${window.location.origin}/`
             mode: 'subscription'
           }),
         });
