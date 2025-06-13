@@ -12,7 +12,6 @@ import {
   LogOut,
   Menu,
   X,
-  User,
   Crown,
   BarChart3,
   BellRing,
@@ -57,17 +56,15 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
       if (!user) return;
 
       try {
-        // Fetch user profile data including profile picture
         const { data: profileData, error: profileError } = await supabase
-          .from('profiles') // Adjust table name as needed
-          .select('profile_picture_url, avatar_url') // Adjust column names as needed
+          .from('profiles')
+          .select('profile_picture_url, avatar_url')
           .eq('user_id', user.id)
           .maybeSingle();
 
         if (profileError) {
           console.error('Error fetching profile:', profileError);
         } else if (profileData) {
-          // Use whichever column name you have for profile pictures
           const avatarUrl = profileData.profile_picture_url || profileData.avatar_url;
           setProfilePictureUrl(avatarUrl);
         }
@@ -96,7 +93,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
           return;
         }
 
-        if (data?.price_id && data.subscription_status === 'active') {
+        if (data?.price_id && data?.subscription_status === 'active') {
           const product = getProductByPriceId(data.price_id);
           setSubscriptionPlan(product?.name || 'Unknown Plan');
         } else {
@@ -111,7 +108,6 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
     fetchSubscription();
   }, [user]);
 
-  // Function to refresh profile picture (call this from settings when picture is updated)
   const refreshProfilePicture = async () => {
     if (!user) return;
 
@@ -150,13 +146,12 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
     return 'Dashboard';
   };
 
-  // Profile picture component
   const ProfilePicture = ({ size = 'w-8 h-8' }: { size?: string }) => {
     const [imageError, setImageError] = useState(false);
 
     if (isProfilePictureLoading) {
       return (
-        <div className={`${size} rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse`} />
+        <div className={`${size} rounded-circle rounded-full bg-gray-300 dark:bg-gray-600 dark:bg-gray-dark animate-pulse`} />
       );
     }
 
@@ -164,24 +159,21 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
       return (
         <img
           src={profilePictureUrl}
-          alt="Profile"
-          className={`${size} rounded-full object-cover`}
-          onError={() => setImageError(true)}
+          alt="Profile picture"
+          className={`${size} profile-picture rounded-circle rounded-full object-cover`}
+          onError={() => setIsImageError(true)}
         />
       );
     }
 
-    // Fallback to icon
     return (
       <div className={`${size} rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center`}>
-        <User size={16} className="text-white" />
       </div>
     );
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      {/* Sidebar */}
       <AnimatePresence mode="wait">
         <motion.aside
           className={`fixed top-0 left-0 h-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-700/50 shadow-xl z-30 transition-all duration-300 ${
@@ -190,7 +182,6 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
           initial={false}
           animate={{ width: isCollapsed ? 80 : 256 }}
         >
-          {/* Logo Section */}
           <div className="p-4 flex items-center justify-between border-b border-gray-200/50 dark:border-gray-700/50">
             <motion.div
               initial={false}
@@ -214,7 +205,6 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
             </button>
           </div>
 
-          {/* Subscription Status */}
           {!isCollapsed && subscriptionPlan && (
             <div className="px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50">
               <div className={`p-3 rounded-lg ${
@@ -242,7 +232,6 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
             </div>
           )}
 
-          {/* Navigation */}
           <nav className="flex-1 p-4">
             <div className="space-y-2">
               {sidebarItems.map((item) => (
@@ -279,7 +268,6 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
         </motion.aside>
       </AnimatePresence>
 
-      {/* Mobile sidebar */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
@@ -313,7 +301,6 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                 </button>
               </div>
 
-              {/* Mobile Subscription Status */}
               {subscriptionPlan && (
                 <div className="px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50">
                   <div className={`p-3 rounded-lg ${
@@ -371,13 +358,11 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
         )}
       </AnimatePresence>
 
-      {/* Main content */}
       <div
         className={`min-h-screen transition-all duration-300 ${
           isCollapsed ? 'lg:pl-20' : 'lg:pl-64'
         }`}
       >
-        {/* Top navigation */}
         <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-20">
           <div className="flex items-center justify-between h-16 px-6">
             <div className="flex items-center gap-4">
@@ -459,7 +444,6 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
           </div>
         </header>
 
-        {/* Page content */}
         <main className="p-6">
           <motion.div
             key={location.pathname}
