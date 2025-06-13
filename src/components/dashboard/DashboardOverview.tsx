@@ -10,7 +10,8 @@ import {
   TrendingUp,
   Calendar,
   Users,
-  FileText
+  FileText,
+  User
 } from 'lucide-react';
 import {
   AreaChart,
@@ -45,6 +46,11 @@ interface ChartData {
   total: number;
 }
 
+interface UserProfile {
+  name: string;
+  profileImageUrl: string;
+}
+
 const DashboardOverview: React.FC = () => {
   const { user } = useAuth();
   const [metrics, setMetrics] = useState<InvoiceMetrics>({
@@ -61,10 +67,15 @@ const DashboardOverview: React.FC = () => {
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [loading, setLoading] = useState(true);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    name: '',
+    profileImageUrl: ''
+  });
 
   useEffect(() => {
     if (user) {
       fetchDashboardData();
+      fetchUserProfile();
       
       // Set up real-time subscription
       const subscription = supabase
@@ -87,6 +98,51 @@ const DashboardOverview: React.FC = () => {
       };
     }
   }, [user]);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+
+    try {
+      // Get name from user metadata first
+      let userName = '';
+      if (user.user_metadata?.name || user.user_metadata?.full_name) {
+        userName = user.user_metadata.name || user.user_metadata.full_name;
+      }
+
+      // Fetch additional profile data from database
+      const { data, error } = await supabase
+        .from('users')
+        .select('metadata, profile_image_url')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error('Error fetching user profile:', error);
+      }
+
+      let profileImageUrl = '';
+      if (data) {
+        // Use database name if available, otherwise use auth metadata name
+        if (data.metadata?.name) {
+          userName = data.metadata.name;
+        }
+        if (data.profile_image_url) {
+          profileImageUrl = data.profile_image_url;
+        }
+      }
+
+      setUserProfile({
+        name: userName || 'User',
+        profileImageUrl
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      setUserProfile({
+        name: 'User',
+        profileImageUrl: ''
+      });
+    }
+  };
 
   const fetchDashboardData = async () => {
     if (!user) return;
@@ -291,13 +347,33 @@ const DashboardOverview: React.FC = () => {
         className="bg-gradient-to-r from-primary-600/10 to-secondary-600/10 dark:from-primary-900/20 dark:to-secondary-900/20 backdrop-blur-xl rounded-2xl p-6 border border-primary-200/20 dark:border-primary-800/20"
       >
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Welcome back! 👋
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Here's what's happening with your invoices today.
-            </p>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+              {userProfile.profileImageUrl ? (
+                <img
+                  src={userProfile.profileImageUrl}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // If image fails to load, show user icon
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement?.appendChild(
+                      document.createElement('div')
+                    );
+                  }}
+                />
+              ) : (
+                <User className="h-8 w-8 text-gray-400" />
+              )}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Welcome back, {userProfile.name}! 👋
+              </h1>
+              <p className="text-gray-600 dark:text-gray-300">
+                Here's what's happening with your invoices today.
+              </p>
+            </div>
           </div>
           <div className="hidden md:flex items-center space-x-4">
             <div className="text-right">
