@@ -56,17 +56,17 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
       if (!user) return;
 
       try {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('profile_picture_url, avatar_url')
-          .eq('user_id', user.id)
+        // Fetch user profile data including profile picture from users table
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('profile_image_url')
+          .eq('id', user.id)
           .maybeSingle();
 
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-        } else if (profileData) {
-          const avatarUrl = profileData.profile_picture_url || profileData.avatar_url;
-          setProfilePictureUrl(avatarUrl);
+        if (userError) {
+          console.error('Error fetching user profile:', userError);
+        } else if (userData) {
+          setProfilePictureUrl(userData.profile_image_url);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -112,15 +112,14 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
     if (!user) return;
 
     try {
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('profile_picture_url, avatar_url')
-        .eq('user_id', user.id)
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('profile_image_url')
+        .eq('id', user.id)
         .maybeSingle();
 
-      if (!error && profileData) {
-        const avatarUrl = profileData.profile_picture_url || profileData.avatar_url;
-        setProfilePictureUrl(avatarUrl);
+      if (!error && userData) {
+        setProfilePictureUrl(userData.profile_image_url);
       }
     } catch (error) {
       console.error('Error refreshing profile picture:', error);
