@@ -1,459 +1,435 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Bell, 
-  Search,
-  Home,
-  FileText,
-  Users,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  Crown,
-  BarChart3,
-  BellRing,
-  Zap
-} from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { User, Mail, Save, Loader2, Camera, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
-import { supabase } from '../../lib/supabase';
-import { getProductByPriceId } from '../../stripe-config';
 
-interface SidebarItem {
-  icon: React.ReactNode;
-  label: string;
-  path: string;
-  badge?: string;
-}
+const profileSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Valid email is required'),
+});
 
-const sidebarItems: SidebarItem[] = [
-  { icon: <Home size={20} />, label: 'Dashboard', path: '/dashboard' },
-  { icon: <FileText size={20} />, label: 'Invoices', path: '/dashboard/invoices' },
-  { icon: <Users size={20} />, label: 'Clients', path: '/dashboard/clients' },
-  { icon: <BellRing size={20} />, label: 'Reminders', path: '/dashboard/reminders' },
-  { icon: <BarChart3 size={20} />, label: 'Analytics', path: '/dashboard/analytics' },
-  { icon: <Settings size={20} />, label: 'Settings', path: '/dashboard/settings' },
-];
+const ProfileSettings: React.FC = () => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+  
+  // Form state
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [profileImageUrl, setProfileImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState('');
 
-const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
-  const [notifications, setNotifications] = useState(3);
-  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
-  const [isProfilePictureLoading, setIsProfilePictureLoading] = useState(true);
-  const { user, logout } = useAuth();
-  const location = useLocation();
-  const { isDarkMode, toggleTheme } = useTheme();
+  // Real-time validation state
+  const [nameError, setNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!user) return;
+    if (user && !initialDataLoaded) {
+      initializeUserData();
+    }
+  }, [user, initialDataLoaded]);
 
-      try {
-        // Fetch user profile data including profile picture from users table
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('profile_image_url')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (userError) {
-          console.error('Error fetching user profile:', userError);
-        } else if (userData) {
-          setProfilePictureUrl(userData.profile_image_url);
-        }
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
-      } finally {
-        setIsProfilePictureLoading(false);
-      }
-    };
-
-    fetchUserProfile();
-  }, [user]);
-
-  useEffect(() => {
-    const fetchSubscription = async () => {
-      if (!user) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('stripe_user_subscriptions')
-          .select('price_id, subscription_status')
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching subscription:', error);
-          return;
-        }
-
-        if (data?.price_id && data.subscription_status === 'active') {
-          const product = getProductByPriceId(data.price_id);
-          setSubscriptionPlan(product?.name || 'Unknown Plan');
-        } else {
-          setSubscriptionPlan('Free');
-        }
-      } catch (error) {
-        console.error('Error fetching subscription:', error);
-        setSubscriptionPlan('Free');
-      }
-    };
-
-    fetchSubscription();
-  }, [user]);
-
-  const refreshProfilePicture = async () => {
+  const initializeUserData = async () => {
     if (!user) return;
 
     try {
-      const { data: userData, error } = await supabase
+      setEmail(user.email || '');
+      
+      // Try to get name from user metadata first, then from database
+      let userName = '';
+      if (user.user_metadata?.name || user.user_metadata?.full_name) {
+        userName = user.user_metadata.name || user.user_metadata.full_name;
+      }
+
+      // Fetch additional profile data from database
+      const { data, error } = await supabase
         .from('users')
-        .select('profile_image_url')
+        .select('metadata, profile_image_url')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (!error && userData) {
-        setProfilePictureUrl(userData.profile_image_url);
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error('Error fetching user profile:', error);
       }
+
+      if (data) {
+        // Use database name if available, otherwise use auth metadata name
+        if (data.metadata?.name) {
+          userName = data.metadata.name;
+        }
+        if (data.profile_image_url) {
+          setProfileImageUrl(data.profile_image_url);
+        }
+      }
+
+      setName(userName);
+      setInitialDataLoaded(true);
     } catch (error) {
-      console.error('Error refreshing profile picture:', error);
+      console.error('Error initializing user data:', error);
+      setInitialDataLoaded(true);
     }
   };
 
-  const handleLogout = async () => {
+  // Real-time validation
+  const validateName = (value: string) => {
     try {
-      await logout();
+      z.string().min(1, 'Name is required').parse(value.trim());
+      setNameError('');
+      return true;
     } catch (error) {
-      console.error('Logout failed:', error);
+      if (error instanceof z.ZodError) {
+        setNameError(error.errors[0].message);
+      }
+      return false;
     }
   };
 
-  const getPageTitle = () => {
-    const path = location.pathname;
-    if (path === '/dashboard') return 'Dashboard';
-    if (path.includes('/invoices')) return 'Invoices';
-    if (path.includes('/clients')) return 'Clients';
-    if (path.includes('/reminders')) return 'Reminders';
-    if (path.includes('/analytics')) return 'Analytics';
-    if (path.includes('/settings')) return 'Settings';
-    return 'Dashboard';
+  const validateEmail = (value: string) => {
+    try {
+      z.string().email('Valid email is required').parse(value.trim());
+      setEmailError('');
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setEmailError(error.errors[0].message);
+      }
+      return false;
+    }
   };
 
-  const ProfilePicture = ({ size = 'w-8 h-8' }: { size?: string }) => {
-    const [imageError, setImageError] = useState(false);
-
-    if (isProfilePictureLoading) {
-      return (
-        <div className={`${size} rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse`} />
-      );
+  const validateForm = () => {
+    try {
+      profileSchema.parse({
+        name: name.trim(),
+        email: email.trim(),
+      });
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          const path = err.path.join('.');
+          newErrors[path] = err.message;
+        });
+        setErrors(newErrors);
+      }
+      return false;
     }
-
-    if (profilePictureUrl && !imageError) {
-      return (
-        <img
-          src={profilePictureUrl}
-          alt="Profile"
-          className={`${size} rounded-full object-cover`}
-          onError={() => setImageError(true)}
-        />
-      );
-    }
-
-    return null;
   };
+
+  const handleNameChange = (value: string) => {
+    setName(value);
+    validateName(value);
+  };
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    validateEmail(value);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Please select a valid image file (JPEG, PNG, or WebP)');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    setImageFile(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearImageSelection = () => {
+    setImageFile(null);
+    setImagePreview('');
+  };
+
+  const uploadProfileImage = async (): Promise<string | null> => {
+    if (!imageFile || !user) return null;
+
+    try {
+      setUploadingImage(true);
+
+      // Generate unique filename
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `profile-images/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { data, error: uploadError } = await supabase.storage
+        .from('profiles')
+        .upload(filePath, imageFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profiles')
+        .getPublicUrl(data.path);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload profile image');
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user || !validateForm()) return;
+
+    try {
+      setLoading(true);
+
+      let newImageUrl = profileImageUrl;
+
+      // Upload new image if selected
+      if (imageFile) {
+        const uploadedUrl = await uploadProfileImage();
+        if (uploadedUrl) {
+          newImageUrl = uploadedUrl;
+        } else {
+          // If image upload fails, don't proceed with the rest
+          return;
+        }
+      }
+
+      // Prepare update data
+      const updateData = {
+        metadata: { name: name.trim() },
+        profile_image_url: newImageUrl,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Update user profile in database
+      const { error: updateError } = await supabase
+        .from('users')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          ...updateData
+        }, {
+          onConflict: 'id'
+        });
+
+      if (updateError) {
+        throw new Error(`Database update failed: ${updateError.message}`);
+      }
+
+      // Update email if changed
+      const emailChanged = email.trim() !== user.email;
+      if (emailChanged) {
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: email.trim(),
+        });
+
+        if (emailError) {
+          // Rollback database changes if email update fails
+          await supabase
+            .from('users')
+            .update({
+              metadata: { name: user.user_metadata?.name || '' },
+              profile_image_url: profileImageUrl,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', user.id);
+          
+          throw new Error(`Email update failed: ${emailError.message}`);
+        }
+        toast.success('Profile updated! Please check your email to confirm the new address.');
+      } else {
+        toast.success('Profile updated successfully!');
+      }
+
+      // Update local state
+      setProfileImageUrl(newImageUrl);
+      setImageFile(null);
+      setImagePreview('');
+
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast.error(error.message || 'Failed to update profile. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const currentImage = imagePreview || profileImageUrl;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <AnimatePresence mode="wait">
-        <motion.aside
-          className={`fixed top-0 left-0 h-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-700/50 shadow-xl z-30 transition-all duration-300 ${
-            isCollapsed ? 'w-20' : 'w-64'
-          } hidden lg:block`}
-          initial={false}
-          animate={{ width: isCollapsed ? 80 : 256 }}
-        >
-          <div className="p-4 flex items-center justify-between border-b border-gray-200/50 dark:border-gray-700/50">
-            <motion.div
-              initial={false}
-              animate={{ opacity: isCollapsed ? 0 : 1 }}
-              className="flex items-center gap-2"
-            >
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary-600 to-secondary-500 flex items-center justify-center">
-                <Zap className="h-5 w-5 text-white" />
-              </div>
-              {!isCollapsed && (
-                <span className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent">
-                  ZaytrixFlow
-                </span>
-              )}
-            </motion.div>
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-            </button>
-          </div>
+    <div className="p-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+          Profile Information
+        </h2>
+        <p className="text-gray-600 dark:text-gray-300">
+          Update your personal information, email address, and profile picture.
+        </p>
+      </div>
 
-          {!isCollapsed && subscriptionPlan && (
-            <div className="px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50">
-              <div className={`p-3 rounded-lg ${
-                subscriptionPlan === 'Free' 
-                  ? 'bg-gray-100 dark:bg-gray-700' 
-                  : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 border border-primary-200/30 dark:border-primary-800/30'
-              }`}>
-                <div className="flex items-center gap-2">
-                  {subscriptionPlan !== 'Free' && (
-                    <Crown className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                  )}
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {subscriptionPlan} Plan
-                  </span>
-                </div>
-                {subscriptionPlan === 'Free' && (
-                  <Link
-                    to="/#pricing"
-                    className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
-                  >
-                    Upgrade now
-                  </Link>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Profile Picture Section */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+            Profile Picture
+          </label>
+          <div className="flex items-center space-x-6">
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                {currentImage ? (
+                  <img
+                    src={currentImage}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="h-12 w-12 text-gray-400" />
                 )}
               </div>
-            </div>
-          )}
-
-          <nav className="flex-1 p-4">
-            <div className="space-y-2">
-              {sidebarItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center px-3 py-3 rounded-lg transition-all duration-200 group relative ${
-                    location.pathname === item.path
-                      ? 'bg-gradient-to-r from-primary-500/10 to-secondary-500/10 text-primary-600 dark:text-primary-400 shadow-sm'
-                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
-                  }`}
-                >
-                  <span className="flex-shrink-0">{item.icon}</span>
-                  {!isCollapsed && (
-                    <>
-                      <span className="ml-3 font-medium">{item.label}</span>
-                      {item.badge && (
-                        <span className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                          {item.badge}
-                        </span>
-                      )}
-                    </>
-                  )}
-                  {location.pathname === item.path && (
-                    <motion.div
-                      className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-500 to-secondary-500 rounded-r"
-                      layoutId="activeTab"
-                    />
-                  )}
-                </Link>
-              ))}
-            </div>
-          </nav>
-        </motion.aside>
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black z-40 lg:hidden"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-            <motion.aside
-              initial={{ x: -256 }}
-              animate={{ x: 0 }}
-              exit={{ x: -256 }}
-              className="fixed top-0 left-0 h-full w-64 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl shadow-xl z-50 lg:hidden"
-            >
-              <div className="p-4 flex items-center justify-between border-b border-gray-200/50 dark:border-gray-700/50">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary-600 to-secondary-500 flex items-center justify-center">
-                    <Zap className="h-5 w-5 text-white" />
-                  </div>
-                  <span className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent">
-                    ZaytrixFlow
-                  </span>
-                </div>
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              {subscriptionPlan && (
-                <div className="px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50">
-                  <div className={`p-3 rounded-lg ${
-                    subscriptionPlan === 'Free' 
-                      ? 'bg-gray-100 dark:bg-gray-700' 
-                      : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 border border-primary-200/30 dark:border-primary-800/30'
-                  }`}>
-                    <div className="flex items-center gap-2">
-                      {subscriptionPlan !== 'Free' && (
-                        <Crown className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                      )}
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {subscriptionPlan} Plan
-                      </span>
-                    </div>
-                    {subscriptionPlan === 'Free' && (
-                      <Link
-                        to="/#pricing"
-                        className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Upgrade now
-                      </Link>
-                    )}
-                  </div>
+              {uploadingImage && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 text-white animate-spin" />
                 </div>
               )}
-
-              <nav className="p-4">
-                <div className="space-y-2">
-                  {sidebarItems.map((item) => (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`flex items-center px-3 py-3 rounded-lg transition-all duration-200 ${
-                        location.pathname === item.path
-                          ? 'bg-gradient-to-r from-primary-500/10 to-secondary-500/10 text-primary-600 dark:text-primary-400'
-                          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
-                      }`}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <span className="flex-shrink-0">{item.icon}</span>
-                      <span className="ml-3 font-medium">{item.label}</span>
-                      {item.badge && (
-                        <span className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
-                  ))}
-                </div>
-              </nav>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
-
-      <div
-        className={`min-h-screen transition-all duration-300 ${
-          isCollapsed ? 'lg:pl-20' : 'lg:pl-64'
-        }`}
-      >
-        <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-20">
-          <div className="flex items-center justify-between h-16 px-6">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setIsMobileMenuOpen(true)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 lg:hidden"
-              >
-                <Menu size={20} />
-              </button>
-
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  {getPageTitle()}
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {new Date().toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </p>
-              </div>
             </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="relative">
+            
+            <div className="flex flex-col space-y-2">
+              <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <Camera className="h-4 w-4 mr-2" />
+                Choose Photo
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleImageSelect}
+                  disabled={loading || uploadingImage}
+                />
+              </label>
+              
+              {imagePreview && (
                 <button
-                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
+                  type="button"
+                  onClick={clearImageSelection}
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-error-500"
+                  disabled={loading || uploadingImage}
                 >
-                  <ProfilePicture />
-                  <div className="hidden md:block text-left">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                      {user?.email?.split('@')[0] || 'User'}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {subscriptionPlan} Plan
-                    </p>
-                  </div>
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
                 </button>
-
-                <AnimatePresence>
-                  {isProfileDropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute right-0 mt-2 w-48 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50 py-1"
-                    >
-                      <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {user?.email}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {subscriptionPlan} Plan
-                        </p>
-                      </div>
-                      <Link
-                        to="/dashboard/settings"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                      >
-                        <Settings size={16} className="mr-2" />
-                        Settings
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
-                      >
-                        <LogOut size={16} className="mr-2" />
-                        Sign out
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              )}
+              
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                JPG, PNG, or WebP. Max 5MB.
+              </p>
             </div>
           </div>
-        </header>
+        </div>
 
-        <main className="p-6">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Full Name
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              disabled={loading || uploadingImage}
+              className={`w-full pl-10 pr-4 py-3 rounded-lg border ${
+                (errors.name || nameError) ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
+              } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed`}
+              placeholder="Enter your full name"
+            />
+            <User className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+          </div>
+          {(errors.name || nameError) && (
+            <p className="mt-1 text-sm text-error-500">{errors.name || nameError}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Email Address
+          </label>
+          <div className="relative">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => handleEmailChange(e.target.value)}
+              disabled={loading || uploadingImage}
+              className={`w-full pl-10 pr-4 py-3 rounded-lg border ${
+                (errors.email || emailError) ? 'border-error-500' : 'border-gray-300 dark:border-gray-600'
+              } focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed`}
+              placeholder="Enter your email address"
+            />
+            <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+          </div>
+          {(errors.email || emailError) && (
+            <p className="mt-1 text-sm text-error-500">{errors.email || emailError}</p>
+          )}
+          {email !== user?.email && email.trim() && !emailError && (
+            <p className="mt-1 text-sm text-warning-600 dark:text-warning-400">
+              Changing your email will require verification
+            </p>
+          )}
+        </div>
+
+        <div className="pt-4">
+          <motion.button
+            type="submit"
+            disabled={loading || uploadingImage || !!nameError || !!emailError}
+            className="px-6 py-3 bg-gradient-to-r from-primary-600 to-secondary-500 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-primary-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            whileHover={{ scale: (loading || uploadingImage) ? 1 : 1.02 }}
+            whileTap={{ scale: (loading || uploadingImage) ? 1 : 0.98 }}
           >
-            {children}
-          </motion.div>
-        </main>
-      </div>
+            {(loading || uploadingImage) ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {uploadingImage ? 'Uploading...' : 'Saving...'}
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save Changes
+              </>
+            )}
+          </motion.button>
+        </div>
+      </form>
     </div>
   );
 };
 
-export default DashboardLayout;
+export default ProfileSettings;
