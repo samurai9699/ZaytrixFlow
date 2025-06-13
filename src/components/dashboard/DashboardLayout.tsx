@@ -93,7 +93,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
           return;
         }
 
-        if (data?.price_id && data?.subscription_status === 'active') {
+        if (data?.price_id && data.subscription_status === 'active') {
           const product = getProductByPriceId(data.price_id);
           setSubscriptionPlan(product?.name || 'Unknown Plan');
         } else {
@@ -151,7 +151,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
     if (isProfilePictureLoading) {
       return (
-        <div className={`${size} rounded-circle rounded-full bg-gray-300 dark:bg-gray-600 dark:bg-gray-dark animate-pulse`} />
+        <div className={`${size} rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse`} />
       );
     }
 
@@ -159,17 +159,14 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
       return (
         <img
           src={profilePictureUrl}
-          alt="Profile picture"
-          className={`${size} profile-picture rounded-circle rounded-full object-cover`}
-          onError={() => setIsImageError(true)}
+          alt="Profile"
+          className={`${size} rounded-full object-cover`}
+          onError={() => setImageError(true)}
         />
       );
     }
 
-    return (
-      <div className={`${size} rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center`}>
-      </div>
-    );
+    return null;
   };
 
   return (
