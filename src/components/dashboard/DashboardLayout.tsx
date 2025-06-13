@@ -46,9 +46,40 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
   const [notifications, setNotifications] = useState(3);
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
+  const [isProfilePictureLoading, setIsProfilePictureLoading] = useState(true);
   const { user, logout } = useAuth();
   const location = useLocation();
   const { isDarkMode, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+
+      try {
+        // Fetch user profile data including profile picture
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles') // Adjust table name as needed
+          .select('profile_picture_url, avatar_url') // Adjust column names as needed
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+        } else if (profileData) {
+          // Use whichever column name you have for profile pictures
+          const avatarUrl = profileData.profile_picture_url || profileData.avatar_url;
+          setProfilePictureUrl(avatarUrl);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      } finally {
+        setIsProfilePictureLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
 
   useEffect(() => {
     const fetchSubscription = async () => {
@@ -80,6 +111,26 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
     fetchSubscription();
   }, [user]);
 
+  // Function to refresh profile picture (call this from settings when picture is updated)
+  const refreshProfilePicture = async () => {
+    if (!user) return;
+
+    try {
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('profile_picture_url, avatar_url')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!error && profileData) {
+        const avatarUrl = profileData.profile_picture_url || profileData.avatar_url;
+        setProfilePictureUrl(avatarUrl);
+      }
+    } catch (error) {
+      console.error('Error refreshing profile picture:', error);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -97,6 +148,35 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
     if (path.includes('/analytics')) return 'Analytics';
     if (path.includes('/settings')) return 'Settings';
     return 'Dashboard';
+  };
+
+  // Profile picture component
+  const ProfilePicture = ({ size = 'w-8 h-8' }: { size?: string }) => {
+    const [imageError, setImageError] = useState(false);
+
+    if (isProfilePictureLoading) {
+      return (
+        <div className={`${size} rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse`} />
+      );
+    }
+
+    if (profilePictureUrl && !imageError) {
+      return (
+        <img
+          src={profilePictureUrl}
+          alt="Profile"
+          className={`${size} rounded-full object-cover`}
+          onError={() => setImageError(true)}
+        />
+      );
+    }
+
+    // Fallback to icon
+    return (
+      <div className={`${size} rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center`}>
+        <User size={16} className="text-white" />
+      </div>
+    );
   };
 
   return (
@@ -329,9 +409,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                   onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                   className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center">
-                    <User size={16} className="text-white" />
-                  </div>
+                  <ProfilePicture />
                   <div className="hidden md:block text-left">
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
                       {user?.email?.split('@')[0] || 'User'}
