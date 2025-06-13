@@ -78,6 +78,34 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
     fetchUserProfile();
   }, [user]);
 
+  // Set up real-time subscription for profile picture updates
+  useEffect(() => {
+    if (!user) return;
+
+    const subscription = supabase
+      .channel('user-profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'users',
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (payload.new.profile_image_url !== undefined) {
+            setProfilePictureUrl(payload.new.profile_image_url);
+            setIsProfilePictureLoading(false);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [user]);
+
   useEffect(() => {
     const fetchSubscription = async () => {
       if (!user) return;
@@ -341,9 +369,9 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                       <span className="flex-shrink-0">{item.icon}</span>
                       <span className="ml-3 font-medium">{item.label}</span>
                       {item.badge && (
-                        <span className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                        <spanan className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
                           {item.badge}
-                        </span>
+                        </spanan>
                       )}
                     </Link>
                   ))}
