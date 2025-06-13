@@ -1,459 +1,570 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Bell, 
-  Search,
-  Home,
-  FileText,
+import { motion } from 'framer-motion';
+import {
+  DollarSign,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  ArrowUpRight,
+  ArrowDownRight,
+  TrendingUp,
+  Calendar,
   Users,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  Crown,
-  BarChart3,
-  BellRing,
-  Zap
+  FileText
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line
+} from 'recharts';
 import { supabase } from '../../lib/supabase';
-import { getProductByPriceId } from '../../stripe-config';
+import { useAuth } from '../../contexts/AuthContext';
 
-interface SidebarItem {
-  icon: React.ReactNode;
-  label: string;
-  path: string;
-  badge?: string;
+interface InvoiceMetrics {
+  totalUnpaid: number;
+  totalPending: number;
+  totalUpcoming: number;
+  totalPaid: number;
+  unpaidAmount: number;
+  pendingAmount: number;
+  upcomingAmount: number;
+  paidAmount: number;
+  totalClients: number;
 }
 
-const sidebarItems: SidebarItem[] = [
-  { icon: <Home size={20} />, label: 'Dashboard', path: '/dashboard' },
-  { icon: <FileText size={20} />, label: 'Invoices', path: '/dashboard/invoices' },
-  { icon: <Users size={20} />, label: 'Clients', path: '/dashboard/clients' },
-  { icon: <BellRing size={20} />, label: 'Reminders', path: '/dashboard/reminders' },
-  { icon: <BarChart3 size={20} />, label: 'Analytics', path: '/dashboard/analytics' },
-  { icon: <Settings size={20} />, label: 'Settings', path: '/dashboard/settings' },
-];
+interface ChartData {
+  month: string;
+  unpaid: number;
+  paid: number;
+  total: number;
+}
 
-const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
-  const [notifications, setNotifications] = useState(3);
-  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
-  const [isProfilePictureLoading, setIsProfilePictureLoading] = useState(true);
-  const { user, logout } = useAuth();
-  const location = useLocation();
-  const { isDarkMode, toggleTheme } = useTheme();
-
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!user) return;
-
-      try {
-        // Fetch user profile data including profile picture from users table
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('profile_image_url')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (userError) {
-          console.error('Error fetching user profile:', userError);
-        } else if (userData) {
-          setProfilePictureUrl(userData.profile_image_url);
-        }
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
-      } finally {
-        setIsProfilePictureLoading(false);
-      }
-    };
-
-    fetchUserProfile();
-  }, [user]);
+const DashboardOverview: React.FC = () => {
+  const { user } = useAuth();
+  const [metrics, setMetrics] = useState<InvoiceMetrics>({
+    totalUnpaid: 0,
+    totalPending: 0,
+    totalUpcoming: 0,
+    totalPaid: 0,
+    unpaidAmount: 0,
+    pendingAmount: 0,
+    upcomingAmount: 0,
+    paidAmount: 0,
+    totalClients: 0
+  });
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchSubscription = async () => {
-      if (!user) return;
+    if (user) {
+      fetchDashboardData();
+      
+      // Set up real-time subscription
+      const subscription = supabase
+        .channel('invoices_changes')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'invoices',
+            filter: `user_id=eq.${user.id}`
+          }, 
+          () => {
+            fetchDashboardData();
+          }
+        )
+        .subscribe();
 
-      try {
-        const { data, error } = await supabase
-          .from('stripe_user_subscriptions')
-          .select('price_id, subscription_status')
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching subscription:', error);
-          return;
-        }
-
-        if (data?.price_id && data.subscription_status === 'active') {
-          const product = getProductByPriceId(data.price_id);
-          setSubscriptionPlan(product?.name || 'Unknown Plan');
-        } else {
-          setSubscriptionPlan('Free');
-        }
-      } catch (error) {
-        console.error('Error fetching subscription:', error);
-        setSubscriptionPlan('Free');
-      }
-    };
-
-    fetchSubscription();
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
   }, [user]);
 
-  const refreshProfilePicture = async () => {
+  const fetchDashboardData = async () => {
     if (!user) return;
 
     try {
-      const { data: userData, error } = await supabase
-        .from('users')
-        .select('profile_image_url')
-        .eq('id', user.id)
-        .maybeSingle();
+      setLoading(true);
 
-      if (!error && userData) {
-        setProfilePictureUrl(userData.profile_image_url);
-      }
+      // Fetch client count
+      const { count: clientCount, error: clientError } = await supabase
+        .from('clients')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      if (clientError) throw clientError;
+
+      // Fetch invoice metrics
+      const { data: invoices, error } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Calculate metrics
+      const newMetrics = invoices?.reduce((acc, invoice) => {
+        const amount = parseFloat(invoice.amount.toString());
+        
+        switch (invoice.status) {
+  case 'unpaid':
+    if (new Date(invoice.due_date) < new Date()) {
+      acc.totalUnpaid++;
+      acc.unpaidAmount += amount;
+    }
+    break;
+  case 'draft':
+  case 'upcoming':
+    acc.totalUpcoming++;
+    acc.upcomingAmount += amount;
+    break;
+  case 'pending':
+    acc.totalPending++;
+    acc.pendingAmount += amount;
+    break;
+  case 'paid':
+    acc.totalPaid++;
+    acc.paidAmount += amount;
+    break;
+}
+        return acc;
+      }, {
+        totalUnpaid: 0,
+        totalPending: 0,
+        totalUpcoming: 0,
+        totalPaid: 0,
+        unpaidAmount: 0,
+        pendingAmount: 0,
+        upcomingAmount: 0,
+        paidAmount: 0,
+        totalClients: clientCount || 0
+      }) || metrics;
+
+      setMetrics(newMetrics);
+
+      // Generate chart data for last 6 months
+      const chartData = generateChartData(invoices || []);
+      setChartData(chartData);
+
+      // Generate recent activity
+      const activity = generateRecentActivity(invoices || []);
+      setRecentActivity(activity);
+
     } catch (error) {
-      console.error('Error refreshing profile picture:', error);
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout failed:', error);
+  const generateChartData = (invoices: any[]): ChartData[] => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+    const currentYear = new Date().getFullYear();
+    
+    return months.map((month, index) => {
+      const monthStart = new Date(currentYear, index, 1);
+      const monthEnd = new Date(currentYear, index + 1, 0);
+      
+      const monthInvoices = invoices.filter(invoice => {
+        const createdAt = new Date(invoice.created_at);
+        return createdAt >= monthStart && createdAt <= monthEnd;
+      });
+
+      const unpaid = monthInvoices
+        .filter(inv => inv.status === 'unpaid')
+        .reduce((sum, inv) => sum + parseFloat(inv.amount.toString()), 0);
+      
+      const paid = monthInvoices
+        .filter(inv => inv.status === 'paid')
+        .reduce((sum, inv) => sum + parseFloat(inv.amount.toString()), 0);
+
+      return {
+        month,
+        unpaid: Math.round(unpaid),
+        paid: Math.round(paid),
+        total: Math.round(unpaid + paid)
+      };
+    });
+  };
+
+  const generateRecentActivity = (invoices: any[]) => {
+    return invoices
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5)
+      .map(invoice => ({
+        id: invoice.id,
+        title: getActivityTitle(invoice),
+        description: `${invoice.client_name} - $${parseFloat(invoice.amount.toString()).toLocaleString()}`,
+        time: getRelativeTime(invoice.created_at),
+        type: getActivityType(invoice.status),
+        status: invoice.status
+      }));
+  };
+
+  const getActivityTitle = (invoice: any) => {
+    switch (invoice.status) {
+      case 'paid': return 'Invoice Paid';
+      case 'unpaid': return 'Invoice Overdue';
+      case 'pending': return 'Payment Pending';
+      case 'upcoming': return 'Invoice Created';
+      default: return 'Invoice Updated';
     }
   };
 
-  const getPageTitle = () => {
-    const path = location.pathname;
-    if (path === '/dashboard') return 'Dashboard';
-    if (path.includes('/invoices')) return 'Invoices';
-    if (path.includes('/clients')) return 'Clients';
-    if (path.includes('/reminders')) return 'Reminders';
-    if (path.includes('/analytics')) return 'Analytics';
-    if (path.includes('/settings')) return 'Settings';
-    return 'Dashboard';
+  const getActivityType = (status: string) => {
+    switch (status) {
+      case 'paid': return 'success';
+      case 'unpaid': return 'error';
+      case 'pending': return 'warning';
+      default: return 'info';
+    }
   };
 
-  const ProfilePicture = ({ size = 'w-8 h-8' }: { size?: string }) => {
-    const [imageError, setImageError] = useState(false);
+  const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    return date.toLocaleDateString();
+  };
 
-    if (isProfilePictureLoading) {
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
       return (
-        <div className={`${size} rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse`} />
+        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+          <p className="font-medium text-gray-900 dark:text-white mb-2">{label} 2025</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {entry.name}: {formatCurrency(entry.value)}
+            </p>
+          ))}
+        </div>
       );
     }
-
-    if (profilePictureUrl && !imageError) {
-      return (
-        <img
-          src={profilePictureUrl}
-          alt="Profile"
-          className={`${size} rounded-full object-cover`}
-          onError={() => setImageError(true)}
-        />
-      );
-    }
-
     return null;
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        {/* Loading skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 animate-pulse">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <AnimatePresence mode="wait">
-        <motion.aside
-          className={`fixed top-0 left-0 h-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-700/50 shadow-xl z-30 transition-all duration-300 ${
-            isCollapsed ? 'w-20' : 'w-64'
-          } hidden lg:block`}
-          initial={false}
-          animate={{ width: isCollapsed ? 80 : 256 }}
-        >
-          <div className="p-4 flex items-center justify-between border-b border-gray-200/50 dark:border-gray-700/50">
-            <motion.div
-              initial={false}
-              animate={{ opacity: isCollapsed ? 0 : 1 }}
-              className="flex items-center gap-2"
-            >
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary-600 to-secondary-500 flex items-center justify-center">
-                <Zap className="h-5 w-5 text-white" />
-              </div>
-              {!isCollapsed && (
-                <span className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent">
-                  ZaytrixFlow
-                </span>
-              )}
-            </motion.div>
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-            </button>
-          </div>
-
-          {!isCollapsed && subscriptionPlan && (
-            <div className="px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50">
-              <div className={`p-3 rounded-lg ${
-                subscriptionPlan === 'Free' 
-                  ? 'bg-gray-100 dark:bg-gray-700' 
-                  : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 border border-primary-200/30 dark:border-primary-800/30'
-              }`}>
-                <div className="flex items-center gap-2">
-                  {subscriptionPlan !== 'Free' && (
-                    <Crown className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                  )}
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {subscriptionPlan} Plan
-                  </span>
-                </div>
-                {subscriptionPlan === 'Free' && (
-                  <Link
-                    to="/#pricing"
-                    className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
-                  >
-                    Upgrade now
-                  </Link>
-                )}
-              </div>
-            </div>
-          )}
-
-          <nav className="flex-1 p-4">
-            <div className="space-y-2">
-              {sidebarItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center px-3 py-3 rounded-lg transition-all duration-200 group relative ${
-                    location.pathname === item.path
-                      ? 'bg-gradient-to-r from-primary-500/10 to-secondary-500/10 text-primary-600 dark:text-primary-400 shadow-sm'
-                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
-                  }`}
-                >
-                  <span className="flex-shrink-0">{item.icon}</span>
-                  {!isCollapsed && (
-                    <>
-                      <span className="ml-3 font-medium">{item.label}</span>
-                      {item.badge && (
-                        <span className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                          {item.badge}
-                        </span>
-                      )}
-                    </>
-                  )}
-                  {location.pathname === item.path && (
-                    <motion.div
-                      className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-500 to-secondary-500 rounded-r"
-                      layoutId="activeTab"
-                    />
-                  )}
-                </Link>
-              ))}
-            </div>
-          </nav>
-        </motion.aside>
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black z-40 lg:hidden"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-            <motion.aside
-              initial={{ x: -256 }}
-              animate={{ x: 0 }}
-              exit={{ x: -256 }}
-              className="fixed top-0 left-0 h-full w-64 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl shadow-xl z-50 lg:hidden"
-            >
-              <div className="p-4 flex items-center justify-between border-b border-gray-200/50 dark:border-gray-700/50">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary-600 to-secondary-500 flex items-center justify-center">
-                    <Zap className="h-5 w-5 text-white" />
-                  </div>
-                  <span className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent">
-                    ZaytrixFlow
-                  </span>
-                </div>
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              {subscriptionPlan && (
-                <div className="px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50">
-                  <div className={`p-3 rounded-lg ${
-                    subscriptionPlan === 'Free' 
-                      ? 'bg-gray-100 dark:bg-gray-700' 
-                      : 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 border border-primary-200/30 dark:border-primary-800/30'
-                  }`}>
-                    <div className="flex items-center gap-2">
-                      {subscriptionPlan !== 'Free' && (
-                        <Crown className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                      )}
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {subscriptionPlan} Plan
-                      </span>
-                    </div>
-                    {subscriptionPlan === 'Free' && (
-                      <Link
-                        to="/#pricing"
-                        className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Upgrade now
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <nav className="p-4">
-                <div className="space-y-2">
-                  {sidebarItems.map((item) => (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`flex items-center px-3 py-3 rounded-lg transition-all duration-200 ${
-                        location.pathname === item.path
-                          ? 'bg-gradient-to-r from-primary-500/10 to-secondary-500/10 text-primary-600 dark:text-primary-400'
-                          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
-                      }`}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <span className="flex-shrink-0">{item.icon}</span>
-                      <span className="ml-3 font-medium">{item.label}</span>
-                      {item.badge && (
-                        <span className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
-                  ))}
-                </div>
-              </nav>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
-
-      <div
-        className={`min-h-screen transition-all duration-300 ${
-          isCollapsed ? 'lg:pl-20' : 'lg:pl-64'
-        }`}
+    <div className="space-y-8">
+      {/* Welcome Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-primary-600/10 to-secondary-600/10 dark:from-primary-900/20 dark:to-secondary-900/20 backdrop-blur-xl rounded-2xl p-6 border border-primary-200/20 dark:border-primary-800/20"
       >
-        <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-20">
-          <div className="flex items-center justify-between h-16 px-6">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setIsMobileMenuOpen(true)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 lg:hidden"
-              >
-                <Menu size={20} />
-              </button>
-
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  {getPageTitle()}
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {new Date().toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <button
-                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
-                >
-                  <ProfilePicture />
-                  <div className="hidden md:block text-left">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                      {user?.email?.split('@')[0] || 'User'}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {subscriptionPlan} Plan
-                    </p>
-                  </div>
-                </button>
-
-                <AnimatePresence>
-                  {isProfileDropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute right-0 mt-2 w-48 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-lg shadow-lg border border-gray-200/50 dark:border-gray-700/50 py-1"
-                    >
-                      <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {user?.email}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {subscriptionPlan} Plan
-                        </p>
-                      </div>
-                      <Link
-                        to="/dashboard/settings"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                      >
-                        <Settings size={16} className="mr-2" />
-                        Settings
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
-                      >
-                        <LogOut size={16} className="mr-2" />
-                        Sign out
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Welcome back! 👋
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              Here's what's happening with your invoices today.
+            </p>
+          </div>
+          <div className="hidden md:flex items-center space-x-4">
+            <div className="text-right">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Outstanding</p>
+              <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+                {formatCurrency(metrics.unpaidAmount + metrics.pendingAmount)}
+              </p>
             </div>
           </div>
-        </header>
+        </div>
+      </motion.div>
 
-        <main className="p-6">
+      {/* Key Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          {
+            title: 'Unpaid Invoices',
+            value: metrics.totalUnpaid,
+            amount: metrics.unpaidAmount,
+            icon: <AlertCircle className="text-error-600 dark:text-error-400" />,
+            change: '+2 from last month',
+            positive: true,
+            gradient: 'from-error-500/10 to-error-600/10'
+          },
+          {
+            title: 'Pending Invoices',
+            value: metrics.totalPending,
+            amount: metrics.pendingAmount,
+            icon: <Clock className="text-warning-600 dark:text-warning-400" />,
+            change: '+1 from last month',
+            positive: true,
+            gradient: 'from-warning-500/10 to-warning-600/10'
+          },
+          {
+            title: 'Upcoming Invoices',
+            value: metrics.totalUpcoming,
+            amount: metrics.upcomingAmount,
+            icon: <Calendar className="text-primary-600 dark:text-primary-400" />,
+            change: '+3 from last month',
+            positive: true,
+            gradient: 'from-primary-500/10 to-primary-600/10'
+          },
+          {
+            title: 'Paid Invoices',
+            value: metrics.totalPaid,
+            amount: metrics.paidAmount,
+            icon: <CheckCircle className="text-success-600 dark:text-success-400" />,
+            change: '+5 from last month',
+            positive: true,
+            gradient: 'from-success-500/10 to-success-600/10'
+          }
+        ].map((stat, index) => (
           <motion.div
-            key={location.pathname}
+            key={index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
+            transition={{ delay: index * 0.1 }}
+            className={`bg-gradient-to-br ${stat.gradient} backdrop-blur-xl rounded-xl p-6 shadow-sm border border-gray-200/50 dark:border-gray-700/50 hover:shadow-lg transition-all duration-300`}
           >
-            {children}
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 rounded-lg bg-white/50 dark:bg-gray-800/50">
+                {stat.icon}
+              </div>
+              <span className={`text-sm font-medium flex items-center gap-1 ${
+                stat.positive ? 'text-success-600 dark:text-success-400' : 'text-error-600 dark:text-error-400'
+              }`}>
+                {stat.positive ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                {stat.change}
+              </span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {stat.value}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{stat.title}</p>
+              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                {formatCurrency(stat.amount)}
+              </p>
+            </div>
           </motion.div>
-        </main>
+        ))}
       </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Invoice Trends Chart */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                Invoice Trends
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Unpaid vs Paid invoices over the last 6 months
+              </p>
+            </div>
+            <TrendingUp className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+          </div>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorUnpaid" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorPaid" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.5} />
+                <XAxis 
+                  dataKey="month" 
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                />
+                <YAxis 
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="unpaid"
+                  stroke="#EF4444"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorUnpaid)"
+                  name="Unpaid"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="paid"
+                  stroke="#10B981"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorPaid)"
+                  name="Paid"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+
+        {/* Quick Stats */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                Quick Stats
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Key performance indicators
+              </p>
+            </div>
+            <DollarSign className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+          </div>
+          
+          <div className="space-y-6">
+            {[
+              {
+                label: 'Average Invoice Value',
+                value: formatCurrency((metrics.unpaidAmount + metrics.pendingAmount + metrics.upcomingAmount + metrics.paidAmount) / Math.max(1, metrics.totalUnpaid + metrics.totalPending + metrics.totalUpcoming + metrics.totalPaid)),
+                icon: <DollarSign className="h-4 w-4" />,
+                color: 'text-primary-600 dark:text-primary-400'
+              },
+              {
+                label: 'Collection Rate',
+                value: `${Math.round((metrics.totalPaid / Math.max(1, metrics.totalUnpaid + metrics.totalPending + metrics.totalUpcoming + metrics.totalPaid)) * 100)}%`,
+                icon: <TrendingUp className="h-4 w-4" />,
+                color: 'text-success-600 dark:text-success-400'
+              },
+              {
+                label: 'Total Clients',
+                value: metrics.totalClients.toString(),
+                icon: <Users className="h-4 w-4" />,
+                color: 'text-secondary-600 dark:text-secondary-400'
+              },
+              {
+                label: 'This Month Revenue',
+                value: formatCurrency(metrics.paidAmount),
+                icon: <CheckCircle className="h-4 w-4" />,
+                color: 'text-success-600 dark:text-success-400'
+              }
+            ].map((stat, index) => (
+              <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-gray-50/50 dark:bg-gray-700/30">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg bg-white/50 dark:bg-gray-800/50 ${stat.color}`}>
+                    {stat.icon}
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {stat.label}
+                  </span>
+                </div>
+                <span className="text-lg font-bold text-gray-900 dark:text-white">
+                  {stat.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Recent Activity */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+        className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+              Recent Activity
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Latest updates on your invoices
+            </p>
+          </div>
+          <FileText className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+        </div>
+        
+        <div className="space-y-4">
+          {recentActivity.length > 0 ? recentActivity.map((activity, index) => (
+            <div
+              key={activity.id}
+              className="flex items-start gap-4 p-4 rounded-lg bg-gray-50/50 dark:bg-gray-700/30 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <div className={`w-2 h-2 mt-2 rounded-full ${
+                activity.type === 'success' ? 'bg-success-500' :
+                activity.type === 'error' ? 'bg-error-500' :
+                activity.type === 'warning' ? 'bg-warning-500' :
+                'bg-primary-500'
+              }`} />
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  {activity.title}
+                </h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {activity.description}
+                </p>
+              </div>
+              <span className="text-xs text-gray-400 whitespace-nowrap">{activity.time}</span>
+            </div>
+          )) : (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400">No recent activity</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">Create your first invoice to get started</p>
+            </div>
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 };
 
-export default DashboardLayout;
+export default DashboardOverview;
