@@ -10,14 +10,14 @@ const PRICING_PLANS = {
     title: "Pro Plan",
     price: { monthly: 8, annual: 100 },
     stripeMonthlyPriceId: 'price_1RX7OODnl7eA7o2ILPyqAk3r',
-    stripeAnnualPriceId: 'price_1RX7OODnl7eA7o2ILPyqAk3s',
+    stripeAnnualPriceId: 'price_1RX7TcDnl7eA7o2IAROVqhIK',
     features: ['Advanced features', 'Priority support', '10GB storage']
   },
   premium: {
     title: "Premium Plan",
     price: { monthly: 15, annual: 150 },
     stripeMonthlyPriceId: 'price_1RX7RLDnl7eA7o2ImjEdcoOa',
-    stripeAnnualPriceId: 'price_1RX7RLDnl7eA7o2ImjEdcoOb',
+    stripeAnnualPriceId: 'price_1RX7SPDnl7eA7o2IuZTSsS3Y',
     features: ['All Pro features', '24/7 support', 'Unlimited storage', 'Custom integrations']
   },
 };
