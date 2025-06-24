@@ -10,13 +10,14 @@ export const STRIPE_PRODUCTS: Record<string, StripeProduct> = {
     name: 'Pro',
     description: 'Everything you need for growing your business',
     monthlyPriceId: 'price_1RX7OODnl7eA7o2ILPyqAk3r',
-    annualPriceId: 'price_1RX7OODnl7eA7o2ILPyqAk3s'
+    annualPriceId: 'price_1RX7TcDnl7eA7o2IAROVqhIK'
+    
   },
   premium: {
     name: 'Premium',
     description: 'For established freelancers with complex needs.',
     monthlyPriceId: 'price_1RX7RLDnl7eA7o2ImjEdcoOa',
-    annualPriceId: 'price_1RX7RLDnl7eA7o2ImjEdcoOb'
+    annualPriceId: 'price_1RX7SPDnl7eA7o2IuZTSsS3Y'
   },
 };
 
