@@ -17,7 +17,7 @@ import {
   BellRing,
   Zap
 } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';
@@ -50,7 +50,6 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const { user, logout } = useAuth();
   const location = useLocation();
   const { isDarkMode, toggleTheme } = useTheme();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -158,7 +157,6 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/');
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -283,7 +281,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                   )}
                   {location.pathname === item.path && (
                     <motion.div
-                      className="absolute left-0 bottom-0 w-1 bg-gradient-to-b from-primary-500 to-secondary-500 rounded-r"
+                      className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-500 to-secondary-500 rounded-r"
                       layoutId="activeTab"
                     />
                   )}
@@ -371,9 +369,9 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                       <span className="flex-shrink-0">{item.icon}</span>
                       <span className="ml-3 font-medium">{item.label}</span>
                       {item.badge && (
-                        <span className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                        <spanan className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
                           {item.badge}
-                        </span>
+                        </spanan>
                       )}
                     </Link>
                   ))}
@@ -400,7 +398,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
               </button>
 
               <div>
-                <h jurisd:="urn:uuid:4a7d1ed2-1b3b-4b5e-8c7a-3d2f5b6c7d8e" className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
                   {getPageTitle()}
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
