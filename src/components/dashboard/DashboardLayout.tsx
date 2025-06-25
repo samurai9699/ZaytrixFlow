@@ -212,14 +212,20 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
               animate={{ opacity: isCollapsed ? 0 : 1 }}
               className="flex items-center gap-2"
             >
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary-600 to-secondary-500 flex items-center justify-center">
-                <Zap className="h-5 w-5 text-white" />
-              </div>
-              {!isCollapsed && (
-                <span className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent">
-                  ZaytrixFlow
-                </span>
-              )}
+              <Link
+                to="/"
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                title="Go to homepage"
+              >
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary-600 to-secondary-500 flex items-center justify-center">
+                  <Zap className="h-5 w-5 text-white" />
+                </div>
+                {!isCollapsed && (
+                  <span className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent">
+                    ZaytrixFlow
+                  </span>
+                )}
+              </Link>
             </motion.div>
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
@@ -309,14 +315,19 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
               className="fixed top-0 left-0 h-full w-64 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl shadow-xl z-50 lg:hidden"
             >
               <div className="p-4 flex items-center justify-between border-b border-gray-200/50 dark:border-gray-700/50">
-                <div className="flex items-center gap-2">
+                <Link
+                  to="/"
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                  title="Go to homepage"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary-600 to-secondary-500 flex items-center justify-center">
                     <Zap className="h-5 w-5 text-white" />
                   </div>
                   <span className="font-heading font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent">
                     ZaytrixFlow
                   </span>
-                </div>
+                </Link>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -369,9 +380,9 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                       <span className="flex-shrink-0">{item.icon}</span>
                       <span className="ml-3 font-medium">{item.label}</span>
                       {item.badge && (
-                        <spanan className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                        <span className="ml-auto bg-primary-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
                           {item.badge}
-                        </spanan>
+                        </span>
                       )}
                     </Link>
                   ))}
