@@ -104,7 +104,7 @@ const CheckoutPage: React.FC = () => {
           body: JSON.stringify({
             price_id: priceId,
             success_url: `${window.location.origin}/`,
-            cancel_url: `${window.location.origin}/pricing`,
+            cancel_url: `${window.location.origin}/`,
             mode: 'subscription',
             // Add metadata for tracking
             metadata: {
