@@ -15,7 +15,11 @@ const JOBS = [
       "Strong understanding of modern web technologies and best practices",
       "Experience with responsive design and CSS-in-JS solutions",
       "Passion for creating beautiful, intuitive user interfaces"
-    ]
+    ],
+    // Add application URLs for each job
+    applyUrl: "https://www.linkedin.com/jobs/search/?keywords=frontend%20developer%20zaytrixflow",
+    // Alternative: Direct email application
+    // applyEmail: "careers@zaytrixflow.com"
   },
   {
     title: "Customer Support Specialist",
@@ -27,11 +31,30 @@ const JOBS = [
       "Excellent written and verbal communication skills",
       "Problem-solving mindset and attention to detail",
       "Experience with help desk software and CRM systems"
-    ]
+    ],
+    applyUrl: "https://www.indeed.com/jobs?q=customer+support+zaytrixflow",
+    // Alternative: Direct email application
+    // applyEmail: "careers@zaytrixflow.com"
   }
 ];
 
 const CareersPage: React.FC = () => {
+  // Function to handle job applications
+  const handleApply = (job: typeof JOBS[0]) => {
+    if (job.applyUrl) {
+      // Open external job posting
+      window.open(job.applyUrl, '_blank');
+    } else if (job.applyEmail) {
+      // Open email client with pre-filled subject
+      const subject = encodeURIComponent(`Application for ${job.title} Position`);
+      const body = encodeURIComponent(`Dear Hiring Team,\n\nI am interested in applying for the ${job.title} position at ZaytrixFlow.\n\nBest regards`);
+      window.location.href = `mailto:${job.applyEmail}?subject=${subject}&body=${body}`;
+    } else {
+      // Fallback: could redirect to a contact form
+      alert('Please send your application to careers@zaytrixflow.com');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background-light to-white dark:from-background-dark dark:to-gray-900">
       <Navbar />
@@ -110,9 +133,10 @@ const CareersPage: React.FC = () => {
                     </div>
                   </div>
                   <motion.button
-                    className="px-6 py-3 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors flex items-center gap-2"
+                    className="px-6 py-3 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors flex items-center gap-2 cursor-pointer"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={() => handleApply(job)}
                   >
                     Apply Now
                     <ArrowRight size={16} />
