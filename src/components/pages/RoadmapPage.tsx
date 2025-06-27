@@ -29,13 +29,13 @@ const ROADMAP_ITEMS = [
   },
   {
     quarter: "Q1 2026",
-    title: "Advanced Analytics Dashboard",
-    description: "Comprehensive analytics suite for tracking payment performance and business insights.",
+    title: "Smart Email Automation",
+    description: "AI-powered email system that sends timely, personalized invoice reminders to your clients",
     status: "upcoming",
     features: [
-      "Custom report builder",
-      "Cash flow forecasting",
-      "Client segmentation"
+      "Send from custom email/domain (SMTP support)",
+      "AI-based reply detection and sequence control",
+      "Open & click tracking with analytics"
     ]
   }
 ];
