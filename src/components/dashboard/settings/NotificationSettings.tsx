@@ -27,9 +27,9 @@ const NotificationSettings: React.FC = () => {
         .from('user_preferences')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching preferences:', error);
         return;
       }
