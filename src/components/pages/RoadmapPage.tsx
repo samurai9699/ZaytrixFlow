@@ -7,13 +7,13 @@ import Footer from '../Footer';
 const ROADMAP_ITEMS = [
   {
     quarter: "Q3 2025",
-    title: "Client Portal",
-    description: "A dedicated portal for clients to view invoices, make payments, and manage their billing preferences.",
+    title: "Invoice Reminder Core Engine",
+    description: "Core system to automate sending reminders via email with payment links and smart scheduling.",
     status: "in-progress",
     features: [
-      "Self-service payment management",
-      "Invoice history and analytics",
-      "Communication timeline"
+      "One-click payment link integration (Stripe/Paddle)",
+      "Timezone-aware delivery scheduling",
+      "Manual email sending option"
     ]
   },
   {
