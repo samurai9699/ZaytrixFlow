@@ -35,8 +35,11 @@ const NotificationSettings: React.FC = () => {
       }
 
       if (data) {
+        // Load all notification preferences
         setEmailReminders(data.email_reminders ?? true);
-        // Add other notification preferences as they're added to the schema
+        setPaymentNotifications(data.payment_notifications ?? true);
+        setWeeklyReports(data.weekly_reports ?? false);
+        setMarketingEmails(data.marketing_emails ?? false);
       }
     } catch (error) {
       console.error('Error fetching preferences:', error);
@@ -54,6 +57,9 @@ const NotificationSettings: React.FC = () => {
         .upsert({
           user_id: user.id,
           email_reminders: emailReminders,
+          payment_notifications: paymentNotifications,
+          weekly_reports: weeklyReports,
+          marketing_emails: marketingEmails,
           updated_at: new Date().toISOString(),
         }, {
           onConflict: 'user_id'
