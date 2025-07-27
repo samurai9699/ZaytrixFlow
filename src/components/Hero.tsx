@@ -29,10 +29,6 @@ const Hero: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <span className="inline-block py-1 px-3 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 text-sm font-medium mb-6">
-                Launching Soon
-              </span>
-
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-heading tracking-tight text-gray-900 dark:text-white mb-6 leading-[1.1]">
                 Get Paid{' '}
                 <span className="relative">
@@ -114,24 +110,6 @@ const Hero: React.FC = () => {
         </div>
       </div>
 
-      {/* Built on Bolt Badge - Fixed positioning */}
-      <motion.a
-        href="https://bolt.new"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute top-16 right-4 sm:top-20 sm:right-6 md:top-24 md:right-8 lg:top-20 lg:right-6 xl:top-24 xl:right-8 z-50"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.8 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <img
-          src={`/assets/built-on-bolt-${isDarkMode ? 'white' : 'black'}.png`}
-          alt="Built on Bolt"
-          className="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-22 lg:h-22 xl:w-24 xl:h-24 object-contain transition-all duration-300 hover:opacity-80 drop-shadow-lg"
-        />
-      </motion.a>
     </section>
   );
 };
