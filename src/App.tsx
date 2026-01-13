@@ -2,6 +2,7 @@ import React, { Suspense, ComponentType, LazyExoticComponent } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { Toaster } from 'sonner';
 import ScrollToTop from './utils/ScrollToTop';
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -95,10 +96,11 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => (
 function App() {
   return (
     <AuthProvider>
-      <ThemeProvider>
-        <div className="bg-background-light dark:bg-background-dark text-gray-900 dark:text-white min-h-screen">
-          <Toaster position="top-right" />
-          <ScrollToTop />
+      <NotificationProvider>
+        <ThemeProvider>
+          <div className="bg-background-light dark:bg-background-dark text-gray-900 dark:text-white min-h-screen">
+            <Toaster position="top-right" />
+            <ScrollToTop />
 
           <Routes>
             <Route path="/" element={<LandingPage />} />
@@ -292,6 +294,7 @@ function App() {
           </Routes>
         </div>
       </ThemeProvider>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

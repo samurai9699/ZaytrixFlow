@@ -20,6 +20,7 @@ import CreateClientModal from './CreateClientModal';
 import EditClientModal from './EditClientModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import ClientInvoicesModal from './ClientInvoicesModal';
+import FilterPresets from '../../common/FilterPresets';
 
 interface Client {
   id: string;
@@ -289,6 +290,17 @@ const ClientList: React.FC = () => {
 
       {/* Filters and Search */}
       <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="mb-4">
+          <FilterPresets
+            type="clients"
+            currentFilters={{ searchQuery, sortBy, sortOrder }}
+            onLoadPreset={(filters) => {
+              setSearchQuery(filters.searchQuery || '');
+              setSortBy(filters.sortBy || 'name');
+              setSortOrder(filters.sortOrder || 'asc');
+            }}
+          />
+        </div>
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">

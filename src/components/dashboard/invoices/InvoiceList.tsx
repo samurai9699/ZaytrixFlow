@@ -26,6 +26,8 @@ import EditInvoiceModal from './EditInvoiceModal';
 import InvoicePreviewModal from './InvoicePreviewModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import { generateInvoicePDF } from '../../../utils/pdfGenerator';
+import { sendInvoiceEmail } from '../../../services/emailService';
+import FilterPresets from '../../common/FilterPresets';
 
 interface Invoice {
   id: string;
@@ -227,14 +229,20 @@ const InvoiceList: React.FC = () => {
   };
 
   const handleSendInvoice = async (invoice: Invoice) => {
+    if (!user) return;
+
     try {
       setActionLoading(`send-${invoice.id}`);
-      // Simulate sending email
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success(`Invoice sent to ${invoice.client_email}`);
-    } catch (error) {
+      const result = await sendInvoiceEmail(invoice, user.id, false);
+
+      if (result.success) {
+        toast.success(`Invoice sent to ${invoice.client_email}`);
+      } else {
+        throw new Error(result.error || 'Failed to send email');
+      }
+    } catch (error: any) {
       console.error('Error sending invoice:', error);
-      toast.error('Failed to send invoice');
+      toast.error(error.message || 'Failed to send invoice');
     } finally {
       setActionLoading(null);
     }
@@ -343,6 +351,18 @@ const InvoiceList: React.FC = () => {
 
       {/* Filters and Search */}
       <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="mb-4">
+          <FilterPresets
+            type="invoices"
+            currentFilters={{ searchQuery, statusFilter, sortBy, sortOrder }}
+            onLoadPreset={(filters) => {
+              setSearchQuery(filters.searchQuery || '');
+              setStatusFilter(filters.statusFilter || 'all');
+              setSortBy(filters.sortBy || 'date');
+              setSortOrder(filters.sortOrder || 'desc');
+            }}
+          />
+        </div>
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">

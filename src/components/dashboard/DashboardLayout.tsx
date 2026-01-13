@@ -22,6 +22,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';
 import { getProductByPriceId } from '../../stripe-config';
+import GlobalSearch from '../common/GlobalSearch';
+import NotificationBell from '../common/NotificationBell';
 
 interface SidebarItem {
   icon: React.ReactNode;
@@ -424,6 +426,8 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
             </div>
 
             <div className="flex items-center space-x-4">
+              <GlobalSearch />
+              <NotificationBell />
               <div className="relative">
                 <button
                   onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
