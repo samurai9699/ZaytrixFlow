@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import {
   DollarSign,
@@ -19,241 +19,19 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line
+  ResponsiveContainer
 } from 'recharts';
-import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../contexts/AuthContext';
-
-interface InvoiceMetrics {
-  totalUnpaid: number;
-  totalPending: number;
-  totalUpcoming: number;
-  totalPaid: number;
-  unpaidAmount: number;
-  pendingAmount: number;
-  upcomingAmount: number;
-  paidAmount: number;
-  totalClients: number;
-}
-
-interface ChartData {
-  month: string;
-  unpaid: number;
-  paid: number;
-  total: number;
-}
+import { useDashboardMetrics } from '../../hooks/useDashboardMetrics';
+import { formatCurrency } from '../../utils/dashboardUtils';
 
 const DashboardOverview: React.FC = () => {
-  const { user } = useAuth();
-  const [metrics, setMetrics] = useState<InvoiceMetrics>({
-    totalUnpaid: 0,
-    totalPending: 0,
-    totalUpcoming: 0,
-    totalPaid: 0,
-    unpaidAmount: 0,
-    pendingAmount: 0,
-    upcomingAmount: 0,
-    paidAmount: 0,
-    totalClients: 0
-  });
-  const [chartData, setChartData] = useState<ChartData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (user) {
-      fetchDashboardData();
-      
-      // Set up real-time subscription
-      const subscription = supabase
-        .channel('invoices_changes')
-        .on('postgres_changes', 
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'invoices',
-            filter: `user_id=eq.${user.id}`
-          }, 
-          () => {
-            fetchDashboardData();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    }
-  }, [user]);
-
-  const fetchDashboardData = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-
-      // Fetch client count
-      const { count: clientCount, error: clientError } = await supabase
-        .from('clients')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-
-      if (clientError) throw clientError;
-
-      // Fetch invoice metrics
-      const { data: invoices, error } = await supabase
-        .from('invoices')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Calculate metrics
-      const newMetrics = invoices?.reduce((acc, invoice) => {
-        const amount = parseFloat(invoice.amount.toString());
-        
-        switch (invoice.status) {
-  case 'unpaid':
-    if (new Date(invoice.due_date) < new Date()) {
-      acc.totalUnpaid++;
-      acc.unpaidAmount += amount;
-    }
-    break;
-  case 'draft':
-  case 'upcoming':
-    acc.totalUpcoming++;
-    acc.upcomingAmount += amount;
-    break;
-  case 'pending':
-    acc.totalPending++;
-    acc.pendingAmount += amount;
-    break;
-  case 'paid':
-    acc.totalPaid++;
-    acc.paidAmount += amount;
-    break;
-}
-        return acc;
-      }, {
-        totalUnpaid: 0,
-        totalPending: 0,
-        totalUpcoming: 0,
-        totalPaid: 0,
-        unpaidAmount: 0,
-        pendingAmount: 0,
-        upcomingAmount: 0,
-        paidAmount: 0,
-        totalClients: clientCount || 0
-      }) || metrics;
-
-      setMetrics(newMetrics);
-
-      // Generate chart data for last 6 months
-      const chartData = generateChartData(invoices || []);
-      setChartData(chartData);
-
-      // Generate recent activity
-      const activity = generateRecentActivity(invoices || []);
-      setRecentActivity(activity);
-
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateChartData = (invoices: any[]): ChartData[] => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    const currentYear = new Date().getFullYear();
-    
-    return months.map((month, index) => {
-      const monthStart = new Date(currentYear, index, 1);
-      const monthEnd = new Date(currentYear, index + 1, 0);
-      
-      const monthInvoices = invoices.filter(invoice => {
-        const createdAt = new Date(invoice.created_at);
-        return createdAt >= monthStart && createdAt <= monthEnd;
-      });
-
-      const unpaid = monthInvoices
-        .filter(inv => inv.status === 'unpaid')
-        .reduce((sum, inv) => sum + parseFloat(inv.amount.toString()), 0);
-      
-      const paid = monthInvoices
-        .filter(inv => inv.status === 'paid')
-        .reduce((sum, inv) => sum + parseFloat(inv.amount.toString()), 0);
-
-      return {
-        month,
-        unpaid: Math.round(unpaid),
-        paid: Math.round(paid),
-        total: Math.round(unpaid + paid)
-      };
-    });
-  };
-
-  const generateRecentActivity = (invoices: any[]) => {
-    return invoices
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 5)
-      .map(invoice => ({
-        id: invoice.id,
-        title: getActivityTitle(invoice),
-        description: `${invoice.client_name} - $${parseFloat(invoice.amount.toString()).toLocaleString()}`,
-        time: getRelativeTime(invoice.created_at),
-        type: getActivityType(invoice.status),
-        status: invoice.status
-      }));
-  };
-
-  const getActivityTitle = (invoice: any) => {
-    switch (invoice.status) {
-      case 'paid': return 'Invoice Paid';
-      case 'unpaid': return 'Invoice Overdue';
-      case 'pending': return 'Payment Pending';
-      case 'upcoming': return 'Invoice Created';
-      default: return 'Invoice Updated';
-    }
-  };
-
-  const getActivityType = (status: string) => {
-    switch (status) {
-      case 'paid': return 'success';
-      case 'unpaid': return 'error';
-      case 'pending': return 'warning';
-      default: return 'info';
-    }
-  };
-
-  const getRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours} hours ago`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays} days ago`;
-    return date.toLocaleDateString();
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  const { metrics, chartData, recentActivity, isLoading } = useDashboardMetrics();
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-          <p className="font-medium text-gray-900 dark:text-white mb-2">{label} 2025</p>
+          <p className="font-medium text-gray-900 dark:text-white mb-2">{label} {new Date().getFullYear()}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: {formatCurrency(entry.value)}
@@ -265,7 +43,7 @@ const DashboardOverview: React.FC = () => {
     return null;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-6">
         {/* Loading skeleton */}
@@ -533,7 +311,7 @@ const DashboardOverview: React.FC = () => {
         </div>
         
         <div className="space-y-4">
-          {recentActivity.length > 0 ? recentActivity.map((activity, index) => (
+          {recentActivity.length > 0 ? recentActivity.map((activity) => (
             <div
               key={activity.id}
               className="flex items-start gap-4 p-4 rounded-lg bg-gray-50/50 dark:bg-gray-700/30 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors"
