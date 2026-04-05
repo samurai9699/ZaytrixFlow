@@ -1,8 +1,11 @@
 import React from 'react';
 import { Download, Send } from 'lucide-react';
 
+import type { WizardData } from '../CreateInvoiceWizard';
+import type { LineItem } from '../../../../types';
+
 interface PreviewStepProps {
-  data: any; // TODO: Add proper type
+  data: WizardData;
 }
 
 const PreviewStep: React.FC<PreviewStepProps> = ({ data }) => {
@@ -55,7 +58,7 @@ const PreviewStep: React.FC<PreviewStepProps> = ({ data }) => {
             </tr>
           </thead>
           <tbody>
-            {data.items.map((item: any) => (
+            {data.items.map((item: LineItem) => (
               <tr key={item.id} className="border-b border-gray-200 dark:border-gray-700">
                 <td className="py-4 text-gray-700 dark:text-gray-300">{item.description}</td>
                 <td className="py-4 text-right text-gray-700 dark:text-gray-300">{item.quantity}</td>
@@ -72,7 +75,7 @@ const PreviewStep: React.FC<PreviewStepProps> = ({ data }) => {
             <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
               <span className="text-gray-500 dark:text-gray-400">Subtotal:</span>
               <span className="text-gray-700 dark:text-gray-300">
-                ${data.items.reduce((sum: number, item: any) => sum + item.amount, 0).toFixed(2)}
+                ${data.items.reduce((sum: number, item: LineItem) => sum + item.amount, 0).toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
@@ -82,7 +85,7 @@ const PreviewStep: React.FC<PreviewStepProps> = ({ data }) => {
             <div className="flex justify-between py-2 text-lg font-semibold">
               <span className="text-gray-900 dark:text-white">Total:</span>
               <span className="text-gray-900 dark:text-white">
-                ${data.items.reduce((sum: number, item: any) => sum + item.amount, 0).toFixed(2)}
+                ${data.items.reduce((sum: number, item: LineItem) => sum + item.amount, 0).toFixed(2)}
               </span>
             </div>
           </div>
