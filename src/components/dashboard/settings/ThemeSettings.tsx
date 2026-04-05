@@ -101,7 +101,7 @@ const ThemeSettings: React.FC = () => {
       if (error) throw error;
 
       toast.success('Theme preference saved!');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Error saving theme preference:', error);
       toast.error('Failed to save theme preference. Please try again.');
     } finally {
