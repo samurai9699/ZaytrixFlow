@@ -1,27 +1,6 @@
 import jsPDF from 'jspdf';
 
-interface Invoice {
-  id: string;
-  invoice_number: string;
-  client_name: string;
-  client_email: string;
-  amount: number;
-  currency: string;
-  status: string;
-  issue_date: string;
-  due_date: string;
-  description?: string;
-  line_items?: LineItem[];
-  tax_percentage?: number;
-}
-
-interface LineItem {
-  id: string;
-  description: string;
-  quantity: number;
-  rate: number;
-  amount: number;
-}
+import type { Invoice, LineItem } from '../types';
 
 export const generateInvoicePDF = async (invoice: Invoice): Promise<void> => {
   const pdf = new jsPDF();
@@ -50,7 +29,10 @@ export const generateInvoicePDF = async (invoice: Invoice): Promise<void> => {
   // Calculate totals
   const calculateSubtotal = () => {
     if (invoice.line_items && Array.isArray(invoice.line_items)) {
-      return invoice.line_items.reduce((sum, item) => sum + item.amount, 0);
+      return invoice.line_items.reduce((sum: number, item) => {
+        const lineItem = item as unknown as LineItem;
+        return sum + (lineItem?.amount || 0);
+      }, 0);
     }
     return invoice.amount;
   };
@@ -119,7 +101,6 @@ export const generateInvoicePDF = async (invoice: Invoice): Promise<void> => {
   pdf.setFont('helvetica', 'bold');
   
   // Table headers
-  const tableStartY = yPosition;
   const colWidths = [80, 25, 35, 35];
   const colPositions = [margin, margin + colWidths[0], margin + colWidths[0] + colWidths[1], margin + colWidths[0] + colWidths[1] + colWidths[2]];
   
@@ -139,16 +120,19 @@ export const generateInvoicePDF = async (invoice: Invoice): Promise<void> => {
   
   if (invoice.line_items && Array.isArray(invoice.line_items)) {
     invoice.line_items.forEach((item) => {
+      if (!item) return;
+      const lineItem = item as unknown as LineItem;
+      
       // Check if we need a new page
       if (yPosition > pageHeight - 50) {
         pdf.addPage();
         yPosition = margin;
       }
       
-      pdf.text(item.description, colPositions[0], yPosition);
-      pdf.text(item.quantity.toString(), colPositions[1], yPosition, { align: 'right' });
-      pdf.text(formatCurrency(item.rate, invoice.currency), colPositions[2], yPosition, { align: 'right' });
-      pdf.text(formatCurrency(item.amount, invoice.currency), colPositions[3], yPosition, { align: 'right' });
+      pdf.text(lineItem.description || '', colPositions[0], yPosition);
+      pdf.text((lineItem.quantity || 0).toString(), colPositions[1], yPosition, { align: 'right' });
+      pdf.text(formatCurrency(lineItem.rate || 0, invoice.currency), colPositions[2], yPosition, { align: 'right' });
+      pdf.text(formatCurrency(lineItem.amount || 0, invoice.currency), colPositions[3], yPosition, { align: 'right' });
       yPosition += 8;
     });
   } else {
