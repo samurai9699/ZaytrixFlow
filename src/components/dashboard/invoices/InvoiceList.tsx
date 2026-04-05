@@ -29,32 +29,7 @@ import { generateInvoicePDF } from '../../../utils/pdfGenerator';
 import { sendInvoiceEmail } from '../../../services/emailService';
 import FilterPresets from '../../common/FilterPresets';
 
-interface Invoice {
-  id: string;
-  user_id: string;
-  client_name: string;
-  client_email: string;
-  invoice_number: string;
-  amount: number;
-  currency: string;
-  status: 'unpaid' | 'pending' | 'upcoming' | 'paid';
-  issue_date: string;
-  due_date: string;
-  paid_date?: string;
-  description?: string;
-  line_items?: LineItem[];
-  tax_percentage?: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface LineItem {
-  id: string;
-  description: string;
-  quantity: number;
-  rate: number;
-  amount: number;
-}
+import type { Invoice, LineItem } from '../../../types';
 
 const InvoiceList: React.FC = () => {
   const { user } = useAuth();
@@ -146,7 +121,7 @@ const InvoiceList: React.FC = () => {
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number | Date, bValue: string | number | Date;
       
       switch (sortBy) {
         case 'date':
@@ -240,9 +215,9 @@ const InvoiceList: React.FC = () => {
       } else {
         throw new Error(result.error || 'Failed to send email');
       }
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Error sending invoice:', error);
-      toast.error(error.message || 'Failed to send invoice');
+      toast.error(error instanceof Error ? error.message : 'Failed to send invoice');
     } finally {
       setActionLoading(null);
     }
@@ -356,10 +331,10 @@ const InvoiceList: React.FC = () => {
             type="invoices"
             currentFilters={{ searchQuery, statusFilter, sortBy, sortOrder }}
             onLoadPreset={(filters) => {
-              setSearchQuery(filters.searchQuery || '');
-              setStatusFilter(filters.statusFilter || 'all');
-              setSortBy(filters.sortBy || 'date');
-              setSortOrder(filters.sortOrder || 'desc');
+              setSearchQuery((filters.searchQuery as string) || '');
+              setStatusFilter((filters.statusFilter as string) || 'all');
+              setSortBy((filters.sortBy as 'date' | 'amount' | 'client') || 'date');
+              setSortOrder((filters.sortOrder as 'asc' | 'desc') || 'desc');
             }}
           />
         </div>
