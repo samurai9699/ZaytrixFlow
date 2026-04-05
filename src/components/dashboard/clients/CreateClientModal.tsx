@@ -105,10 +105,11 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ isOpen, onClose, 
       toast.success('Client created successfully!');
       resetForm();
       onSuccess();
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Error creating client:', error);
       
-      if (error.code === '23505') {
+      const isDuplicate = error && typeof error === 'object' && 'code' in error && error.code === '23505';
+      if (isDuplicate) {
         toast.error('A client with this email already exists.');
         setErrors({ email: 'A client with this email already exists' });
       } else {
