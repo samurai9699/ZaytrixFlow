@@ -1,17 +1,6 @@
 import { supabase } from '../lib/supabase';
 
-interface Invoice {
-  id: string;
-  invoice_number: string;
-  client_name: string;
-  client_email: string;
-  amount: number;
-  currency: string;
-  issue_date: string;
-  due_date: string;
-  line_items?: any[];
-  description?: string;
-}
+import type { Invoice, LineItem } from '../types';
 
 export function generateInvoiceEmailHTML(invoice: Invoice, includePaymentLink = false): string {
   const formatCurrency = (amount: number, currency: string) => {
@@ -30,7 +19,9 @@ export function generateInvoiceEmailHTML(invoice: Invoice, includePaymentLink = 
   };
 
   let lineItemsHTML = '';
-  if (invoice.line_items && invoice.line_items.length > 0) {
+  const items = Array.isArray(invoice.line_items) ? (invoice.line_items as unknown as LineItem[]) : [];
+  
+  if (items.length > 0) {
     lineItemsHTML = `
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
         <thead>
@@ -42,7 +33,7 @@ export function generateInvoiceEmailHTML(invoice: Invoice, includePaymentLink = 
           </tr>
         </thead>
         <tbody>
-          ${invoice.line_items.map(item => `
+          ${items.map(item => `
             <tr>
               <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${item.description}</td>
               <td style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb;">${item.quantity}</td>
@@ -213,7 +204,7 @@ export async function sendInvoiceEmail(
     const html = generateInvoiceEmailHTML(invoice, false);
     const subject = `Invoice ${invoice.invoice_number} from Zaytrix Flow`;
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       to: invoice.client_email,
       subject,
       html,
@@ -239,9 +230,9 @@ export async function sendInvoiceEmail(
     }
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error('Error sending invoice email:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
@@ -264,9 +255,9 @@ export async function triggerAutomatedReminders(): Promise<{ success: boolean; e
     }
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error('Error triggering automated reminders:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
