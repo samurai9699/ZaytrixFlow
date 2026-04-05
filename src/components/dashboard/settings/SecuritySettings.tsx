@@ -166,9 +166,9 @@ const SecuritySettings: React.FC = () => {
       document.body.appendChild(announcement);
       setTimeout(() => document.body.removeChild(announcement), 1000);
 
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Error updating password:', error);
-      const errorMessage = error.message || 'Failed to update password. Please try again.';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update password. Please try again.';
       toast.error(errorMessage);
       setErrors({ general: errorMessage });
     } finally {
@@ -202,7 +202,7 @@ const SecuritySettings: React.FC = () => {
       // For now, show a message that it's not implemented
       toast.error('Account deletion is not yet implemented. Please contact support.');
       
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Error deleting account:', error);
       toast.error('Failed to delete account. Please try again.');
     } finally {
