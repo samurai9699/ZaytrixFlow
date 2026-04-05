@@ -278,9 +278,9 @@ const ProfileSettings: React.FC = () => {
       setImageFile(null);
       setImagePreview('');
 
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Error updating profile:', error);
-      toast.error(error.message || 'Failed to update profile. Please try again.');
+      toast.error(error instanceof Error ? error.message : 'Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }
