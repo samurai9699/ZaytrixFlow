@@ -4,10 +4,12 @@ import { X, FileText, Calendar, DollarSign, Eye } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 
+import type { Client } from '../../../types';
+
 interface ClientInvoicesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  client: any;
+  client: Client | null;
 }
 
 interface Invoice {
