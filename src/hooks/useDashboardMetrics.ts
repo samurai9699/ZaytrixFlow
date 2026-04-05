@@ -10,10 +10,12 @@ import {
   ChartData
 } from '../utils/dashboardUtils';
 
+import { Activity } from '../utils/dashboardUtils';
+
 interface DashboardMetricsData {
   metrics: InvoiceMetrics;
   chartData: ChartData[];
-  recentActivity: any[];
+  recentActivity: Activity[];
 }
 
 export const useDashboardMetrics = () => {
