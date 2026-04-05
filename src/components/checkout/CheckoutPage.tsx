@@ -130,13 +130,13 @@ const CheckoutPage: React.FC = () => {
         // Redirect to Stripe Checkout
         window.location.href = url;
 
-      } catch (error: any) {
+      } catch (error: Error | unknown) {
         console.error('Checkout error:', error);
         setCheckoutState({
           status: 'error',
-          message: error.message || 'Failed to start checkout process'
+          message: error instanceof Error ? error.message : 'Failed to start checkout process'
         });
-        toast.error(error.message || 'Failed to start checkout process');
+        toast.error(error instanceof Error ? error.message : 'Failed to start checkout process');
         
         // Redirect back to pricing after error
         setTimeout(() => navigate('/pricing'), 3000);
