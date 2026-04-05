@@ -68,7 +68,7 @@ const NotificationSettings: React.FC = () => {
       if (error) throw error;
 
       toast.success('Notification preferences updated!');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Error updating preferences:', error);
       toast.error('Failed to update preferences. Please try again.');
     } finally {
