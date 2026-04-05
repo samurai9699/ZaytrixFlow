@@ -1,13 +1,16 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Send, Edit3 } from 'lucide-react';
+import { X, Download, Send } from 'lucide-react';
 import { generateInvoicePDF } from '../../../utils/pdfGenerator';
 import { toast } from 'sonner';
+
+import { Invoice } from '../../../types';
+import { isLineItemArray } from '../../../utils/typeGuards';
 
 interface InvoicePreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  invoice: any;
+  invoice: Invoice | null;
 }
 
 const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({ isOpen, onClose, invoice }) => {
@@ -65,8 +68,8 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({ isOpen, onClo
   };
 
   const calculateSubtotal = () => {
-    if (invoice.line_items && Array.isArray(invoice.line_items)) {
-      return invoice.line_items.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
+    if (isLineItemArray(invoice.line_items)) {
+      return invoice.line_items.reduce((sum, item) => sum + item.amount, 0);
     }
     return invoice.amount || 0;
   };
@@ -174,8 +177,8 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({ isOpen, onClo
                     </tr>
                   </thead>
                   <tbody>
-                    {invoice.line_items && Array.isArray(invoice.line_items) ? (
-                      invoice.line_items.map((item: any, index: number) => (
+                    {isLineItemArray(invoice.line_items) ? (
+                      invoice.line_items.map((item, index) => (
                         <tr key={index} className="border-b border-gray-100 dark:border-gray-800">
                           <td className="py-4 text-gray-900 dark:text-white">{item.description}</td>
                           <td className="py-4 text-right text-gray-700 dark:text-gray-300">{item.quantity}</td>
@@ -214,10 +217,10 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({ isOpen, onClo
                       {formatCurrency(calculateSubtotal(), invoice.currency)}
                     </span>
                   </div>
-                  {invoice.tax_percentage > 0 && (
+                  {(invoice.tax_percentage || 0) > 0 && (
                     <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
                       <span className="text-gray-600 dark:text-gray-300">
-                        Tax ({invoice.tax_percentage}%):
+                        Tax ({invoice.tax_percentage || 0}%):
                       </span>
                       <span className="text-gray-900 dark:text-white font-medium">
                         {formatCurrency(calculateTax(), invoice.currency)}
