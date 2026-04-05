@@ -22,20 +22,7 @@ import DeleteConfirmationModal from './DeleteConfirmationModal';
 import ClientInvoicesModal from './ClientInvoicesModal';
 import FilterPresets from '../../common/FilterPresets';
 
-interface Client {
-  id: string;
-  user_id: string;
-  name: string;
-  email: string;
-  company?: string;
-  phone?: string;
-  address?: string;
-  created_at: string;
-  updated_at: string;
-  total_invoices?: number;
-  total_amount?: number;
-  last_invoice_date?: string;
-}
+import type { ClientWithStats as Client } from '../../../types';
 
 const ClientList: React.FC = () => {
   const { user } = useAuth();
@@ -156,7 +143,7 @@ const ClientList: React.FC = () => {
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number | Date = 0, bValue: string | number | Date = 0;
       
       switch (sortBy) {
         case 'name':
@@ -295,9 +282,9 @@ const ClientList: React.FC = () => {
             type="clients"
             currentFilters={{ searchQuery, sortBy, sortOrder }}
             onLoadPreset={(filters) => {
-              setSearchQuery(filters.searchQuery || '');
-              setSortBy(filters.sortBy || 'name');
-              setSortOrder(filters.sortOrder || 'asc');
+              setSearchQuery((filters.searchQuery as string) || '');
+              setSortBy((filters.sortBy as 'name' | 'created_at' | 'total_amount') || 'name');
+              setSortOrder((filters.sortOrder as 'asc' | 'desc') || 'asc');
             }}
           />
         </div>
