@@ -5,20 +5,16 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../lib/supabase';
 
+import type { Invoice, LineItem } from '../../../types';
+import { isLineItemArray, isValidInvoiceStatus } from '../../../utils/typeGuards';
+
 interface EditInvoiceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  invoice: any;
+  invoice: Invoice | null;
   onSuccess: () => void;
 }
 
-interface LineItem {
-  id: string;
-  description: string;
-  quantity: number;
-  rate: number;
-  amount: number;
-}
 
 const invoiceSchema = z.object({
   client_name: z.string().min(1, 'Client name is required'),
@@ -58,10 +54,10 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ isOpen, onClose, in
       setIssueDate(invoice.issue_date || '');
       setDueDate(invoice.due_date || '');
       setDescription(invoice.description || '');
-      setStatus(invoice.status || 'upcoming');
+      setStatus(isValidInvoiceStatus(invoice.status) ? invoice.status : 'upcoming');
       setTaxPercentage(invoice.tax_percentage || 0);
       
-      if (invoice.line_items && Array.isArray(invoice.line_items)) {
+      if (isLineItemArray(invoice.line_items)) {
         setLineItems(invoice.line_items);
       } else {
         // If no line items, create one from the invoice amount
@@ -177,9 +173,9 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ isOpen, onClose, in
 
       toast.success('Invoice updated successfully!');
       onSuccess();
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Error updating invoice:', error);
-      if (error.code === '23505') {
+      if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code === '23505') {
         toast.error('Invoice number already exists. Please use a different number.');
       } else {
         toast.error('Failed to update invoice. Please try again.');
@@ -273,7 +269,12 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ isOpen, onClose, in
                     </label>
                     <select
                       value={status}
-                      onChange={(e) => setStatus(e.target.value as any)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (isValidInvoiceStatus(val)) {
+                          setStatus(val as "unpaid" | "pending" | "upcoming" | "paid");
+                        }
+                      }}
                       className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800"
                     >
                       <option value="upcoming">Upcoming</option>
