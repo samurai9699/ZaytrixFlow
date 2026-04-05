@@ -9,14 +9,14 @@ interface FilterPreset {
   id: string;
   name: string;
   type: 'invoices' | 'clients';
-  filters: any;
+  filters: Record<string, unknown>;
   is_default: boolean;
 }
 
 interface FilterPresetsProps {
   type: 'invoices' | 'clients';
-  currentFilters: any;
-  onLoadPreset: (filters: any) => void;
+  currentFilters: Record<string, unknown>;
+  onLoadPreset: (filters: Record<string, unknown>) => void;
 }
 
 const FilterPresets: React.FC<FilterPresetsProps> = ({ type, currentFilters, onLoadPreset }) => {
@@ -74,7 +74,7 @@ const FilterPresets: React.FC<FilterPresetsProps> = ({ type, currentFilters, onL
       setShowSaveModal(false);
       setNewPresetName('');
       fetchPresets();
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Error saving preset:', error);
       toast.error('Failed to save preset');
     } finally {
@@ -246,3 +246,4 @@ const FilterPresets: React.FC<FilterPresetsProps> = ({ type, currentFilters, onL
 };
 
 export default FilterPresets;
+
