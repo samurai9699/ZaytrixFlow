@@ -4,13 +4,14 @@ import { Bell, Check, CheckCheck, Trash2, X } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import type { NotificationItem } from '../../types';
 
 const NotificationBell: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotifications();
   const navigate = useNavigate();
 
-  const handleNotificationClick = async (notification: any) => {
+  const handleNotificationClick = async (notification: NotificationItem) => {
     if (!notification.is_read) {
       await markAsRead(notification.id);
     }
