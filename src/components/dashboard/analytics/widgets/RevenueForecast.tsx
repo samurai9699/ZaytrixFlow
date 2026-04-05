@@ -33,7 +33,7 @@ const RevenueForecast: React.FC<RevenueForecastProps> = ({ data }) => {
     return `${(confidence * 100).toFixed(1)}%`;
   };
 
-  const getTooltipContent = (value: number, name: string, confidence: number) => {
+  const getTooltipContent = (name: string, confidence: number) => {
     switch (name) {
       case 'upper':
         return `Upper bound (${formatConfidence(confidence)})`;
@@ -101,9 +101,11 @@ const RevenueForecast: React.FC<RevenueForecastProps> = ({ data }) => {
               tick={{ fontSize: 12 }}
             />
             <Tooltip
-              formatter={(value: number, name: string, props: any) => {
-                const item = data[props.payload.payload.index];
-                return [formatCurrency(value), getTooltipContent(value, name, item.confidence)];
+              formatter={(value: number, name: string, item: unknown) => {
+                const props = item as { payload?: { payload?: { index: number } } };
+                const idx = props?.payload?.payload?.index ?? 0;
+                const rowItem = data[idx];
+                return [formatCurrency(value), getTooltipContent(name, rowItem.confidence)];
               }}
               labelFormatter={formatDate}
               contentStyle={{
