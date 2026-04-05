@@ -271,13 +271,13 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
       toast.success('Invoice created successfully!');
       resetForm();
       onSuccess();
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Error creating invoice:', error);
       
-      if (error.code === '23505') {
+      if (error instanceof Error && (error as any).code === '23505') {
         toast.error('Invoice number already exists. Please use a different number.');
         setErrors({ invoice_number: 'Invoice number already exists' });
-      } else if (error.message?.includes('line_items')) {
+      } else if (error instanceof Error && error.message?.includes('line_items')) {
         toast.error('Error saving line items. Please check your data and try again.');
       } else {
         toast.error('Failed to create invoice. Please try again.');
