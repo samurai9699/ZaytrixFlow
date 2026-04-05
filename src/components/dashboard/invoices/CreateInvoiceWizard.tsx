@@ -12,6 +12,22 @@ interface WizardStep {
   description: string;
 }
 
+import type { Client, LineItem } from '../../../types';
+
+export interface WizardDetails {
+  invoiceNumber: string;
+  issueDate: Date;
+  dueDate: Date;
+  terms: string;
+  notes: string;
+}
+
+export interface WizardData {
+  client: Client | null;
+  items: LineItem[];
+  details: WizardDetails;
+}
+
 const STEPS: WizardStep[] = [
   {
     id: 'client',
@@ -38,7 +54,7 @@ const STEPS: WizardStep[] = [
 const CreateInvoiceWizard: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<WizardData>({
     client: null,
     items: [],
     details: {
@@ -50,7 +66,7 @@ const CreateInvoiceWizard: React.FC = () => {
     },
   });
 
-  const updateFormData = (step: string, data: any) => {
+  const updateFormData = <K extends keyof WizardData>(step: K, data: WizardData[K]) => {
     setFormData(prev => ({
       ...prev,
       [step]: data,
