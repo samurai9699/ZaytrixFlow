@@ -1,22 +1,17 @@
 import React, { useState } from 'react';
 import { Search, Plus } from 'lucide-react';
 
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  company?: string;
-}
+import type { Client } from '../../../../types';
 
 interface ClientStepProps {
   data: Client | null;
   onUpdate: (client: Client) => void;
 }
 
-const MOCK_CLIENTS: Client[] = [
+const MOCK_CLIENTS = [
   { id: '1', name: 'John Doe', email: 'john@example.com', company: 'Acme Inc' },
   { id: '2', name: 'Jane Smith', email: 'jane@example.com', company: 'Tech Corp' },
-];
+] as Client[];
 
 const ClientStep: React.FC<ClientStepProps> = ({ data, onUpdate }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,7 +39,7 @@ const ClientStep: React.FC<ClientStepProps> = ({ data, onUpdate }) => {
     const client = {
       id: Math.random().toString(36).substr(2, 9),
       ...newClient,
-    };
+    } as unknown as Client;
     handleClientSelect(client);
     setShowNewClientForm(false);
   };
