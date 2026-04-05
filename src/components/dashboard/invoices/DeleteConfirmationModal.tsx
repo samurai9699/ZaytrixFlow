@@ -2,11 +2,13 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, X, Loader2 } from 'lucide-react';
 
+import type { Invoice } from '../../../types';
+
 interface DeleteConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  invoice: any;
+  invoice: Invoice | null;
   loading: boolean;
 }
 
