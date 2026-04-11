@@ -10,13 +10,93 @@ import ClientRisk from './widgets/ClientRisk';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import 'react-grid-layout/css/styles.css';
-import { useAnalytics } from '../../../hooks/useAnalytics';
+import { RevenueForecastEngine } from '@/lib/forecasting/revenueForecasting';
+
+interface Invoice {
+  id: string;
+  amount: number;
+  due_date: string;
+  paid_date?: string;
+  status: 'paid' | 'unpaid' | 'pending' | 'overdue';
+  client?: {
+    id: string;
+    name: string;
+    industry: string;
+  };
+}
+
+interface PaymentTrendData {
+  date: string;
+  received: number;
+  expected: number;
+}
+
+interface CollectionPerformanceData {
+  label: string;
+  value: number;
+  target: number;
+  trend: 'up' | 'down' | 'stable';
+}
+
+interface AgingAnalysisData {
+  range: string;
+  amount: number;
+  percentage: number;
+}
+
+interface RevenueForecastData {
+  date: string;
+  actual: number | null;
+  forecast: number;
+  lower: number;
+  upper: number;
+  confidence: number;
+}
+
+interface ClientRiskData {
+  name: string;
+  industry: string;
+  riskScore: number;
+  overdueAmount: number;
+}
+
+interface AnalyticsData {
+  paymentTrends: PaymentTrendData[];
+  collectionPerformance: CollectionPerformanceData[];
+  agingAnalysis: AgingAnalysisData[];
+  revenueForecast: RevenueForecastData[];
+  clientRisk: ClientRiskData[];
+  metrics: {
+    totalReceivables: number;
+    avgDaysToPay: number;
+    collectionRate: number;
+    overdueAmount: number;
+  };
+}
+
+interface CSVRow {
+  [key: string]: string | number;
+}
 
 const AnalyticsDashboard: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(1200);
   const [dateRange, setDateRange] = useState('last30');
-  const { analyticsData, isLoading, handleExport } = useAnalytics(dateRange);
+  const [isLoading, setIsLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
+    paymentTrends: [],
+    collectionPerformance: [],
+    agingAnalysis: [],
+    revenueForecast: [],
+    clientRisk: [],
+    metrics: {
+      totalReceivables: 0,
+      avgDaysToPay: 0,
+      collectionRate: 0,
+      overdueAmount: 0
+    }
+  });
+  const { user } = useAuth();
 
   // Responsive layouts for different breakpoints
   const layouts = {
@@ -56,7 +136,372 @@ const AnalyticsDashboard: React.FC = () => {
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
+  const fetchAnalyticsData = async () => {
+    if (!user) return;
 
+    try {
+      setIsLoading(true);
+
+      // Fetch invoices based on date range
+      const startDate = getStartDate(dateRange);
+      const { data: invoices, error: invoicesError } = await supabase
+        .from('invoices')
+        .select(`
+          *,
+          clients (
+            id,
+            name,
+            industry
+          )
+        `)
+        .eq('user_id', user.id)
+        .gte('due_date', startDate.toISOString())
+        .order('due_date', { ascending: true });
+
+      if (invoicesError) throw invoicesError;
+
+      // Process data for different widgets
+      const processedData = processAnalyticsData(invoices || []);
+      setAnalyticsData(processedData);
+
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getStartDate = (range: string) => {
+    const now = new Date();
+    switch (range) {
+      case 'last7':
+        return new Date(now.setDate(now.getDate() - 7));
+      case 'last30':
+        return new Date(now.setDate(now.getDate() - 30));
+      case 'last90':
+        return new Date(now.setDate(now.getDate() - 90));
+      default:
+        return new Date(now.setDate(now.getDate() - 30));
+    }
+  };
+
+  const processAnalyticsData = (invoices: Invoice[]): AnalyticsData => {
+    // Calculate total receivables and other metrics
+    const metrics = invoices.reduce((acc, invoice) => {
+      const amount = invoice.amount;
+      const dueDate = new Date(invoice.due_date);
+      const now = new Date();
+      const daysDiff = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      acc.totalReceivables += amount;
+      if (invoice.status === 'paid') {
+        acc.collectionRate += 1;
+      }
+      if (daysDiff > 0 && invoice.status !== 'paid') {
+        acc.overdueAmount += amount;
+      }
+      if (invoice.status === 'paid' && invoice.paid_date) {
+        const paidDate = new Date(invoice.paid_date);
+        const dueDateObj = new Date(invoice.due_date);
+        acc.avgDaysToPay += Math.floor((paidDate.getTime() - dueDateObj.getTime()) / (1000 * 60 * 60 * 24));
+      }
+      return acc;
+    }, {
+      totalReceivables: 0,
+      avgDaysToPay: 0,
+      collectionRate: 0,
+      overdueAmount: 0
+    });
+
+    // Calculate averages and percentages
+    const totalInvoices = invoices.length || 1;
+    metrics.avgDaysToPay = Math.round(metrics.avgDaysToPay / (totalInvoices * 0.8)); // Assuming 80% paid
+    metrics.collectionRate = Math.round((metrics.collectionRate / totalInvoices) * 100);
+
+    // Process data for each widget
+    const paymentTrends = processPaymentTrends(invoices);
+    const collectionPerformance = processCollectionPerformance(invoices);
+    const agingAnalysis = processAgingAnalysis(invoices);
+    const revenueForecast = processRevenueForecast(invoices);
+    const clientRisk = processClientRisk(invoices);
+
+    return {
+      paymentTrends,
+      collectionPerformance,
+      agingAnalysis,
+      revenueForecast,
+      clientRisk,
+      metrics
+    };
+  };
+
+  const processPaymentTrends = (invoices: Invoice[]): PaymentTrendData[] => {
+    const today = new Date();
+    const dates = new Array(getDateRangeLength()).fill(0).map((_, index) => {
+      const date = new Date(today);
+      date.setDate(date.getDate() - (getDateRangeLength() - 1 - index));
+      return date.toISOString().split('T')[0];
+    });
+
+    return dates.map(date => {
+      const dayInvoices = invoices.filter(inv => inv.due_date.split('T')[0] === date);
+      const received = dayInvoices.filter(inv => inv.status === 'paid')
+        .reduce((sum, inv) => sum + inv.amount, 0);
+      const expected = dayInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+
+      return {
+        date,
+        received,
+        expected
+      };
+    });
+  };
+
+  const processCollectionPerformance = (invoices: Invoice[]): CollectionPerformanceData[] => {
+    const ranges = [
+      { label: '0-30 days', min: 0, max: 30 },
+      { label: '31-60 days', min: 31, max: 60 },
+      { label: '61-90 days', min: 61, max: 90 },
+      { label: '90+ days', min: 91, max: Infinity }
+    ];
+
+    return ranges.map(range => {
+      const rangeInvoices = invoices.filter(inv => {
+        const dueDate = new Date(inv.due_date);
+        const now = new Date();
+        const daysDiff = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+        return daysDiff >= range.min && daysDiff <= range.max;
+      });
+
+      const total = rangeInvoices.length;
+      const paid = rangeInvoices.filter(inv => inv.status === 'paid').length;
+      const value = total ? Math.round((paid / total) * 100) : 0;
+      const target = range.max === Infinity ? 40 : 90 - (range.min / 2);
+
+      return {
+        label: range.label,
+        value,
+        target,
+        trend: value >= target ? 'up' : 'down'
+      };
+    });
+  };
+
+  const processAgingAnalysis = (invoices: Invoice[]): AgingAnalysisData[] => {
+    const ranges = [
+      { range: 'Current', min: -Infinity, max: 0 },
+      { range: '1-30', min: 1, max: 30 },
+      { range: '31-60', min: 31, max: 60 },
+      { range: '61-90', min: 61, max: 90 },
+      { range: '90+', min: 91, max: Infinity }
+    ];
+
+    const totalAmount = invoices.reduce((sum, inv) => sum + inv.amount, 0);
+
+    return ranges.map(range => {
+      const amount = invoices.filter(inv => {
+        const dueDate = new Date(inv.due_date);
+        const now = new Date();
+        const daysDiff = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+        return daysDiff >= range.min && daysDiff <= range.max;
+      }).reduce((sum, inv) => sum + inv.amount, 0);
+
+      return {
+        range: range.range,
+        amount,
+        percentage: totalAmount ? Math.round((amount / totalAmount) * 100) : 0
+      };
+    });
+  };
+
+  const processRevenueForecast = (invoices: Invoice[]): RevenueForecastData[] => {
+    try {
+      const forecastEngine = new RevenueForecastEngine();
+      
+      // Convert invoices to the format expected by the forecast engine
+      const processedInvoices = invoices.map(inv => ({
+        amount: inv.amount,
+        due_date: inv.due_date,
+        status: inv.status,
+        is_recurring: isRecurringClient(invoices, inv.client?.id),
+        client_id: inv.client?.id
+      }));
+
+      return forecastEngine.generateForecast(processedInvoices);
+    } catch (error) {
+      console.error('Error generating revenue forecast:', error);
+      return [];
+    }
+  };
+
+  const isRecurringClient = (invoices: Invoice[], clientId?: string): boolean => {
+    if (!clientId) return false;
+    
+    // Get all invoices for this client
+    const clientInvoices = invoices.filter(inv => inv.client?.id === clientId);
+    if (clientInvoices.length < 3) return false;
+
+    // Check for regular payment patterns
+    const paymentIntervals = [];
+    for (let i = 1; i < clientInvoices.length; i++) {
+      const curr = new Date(clientInvoices[i].due_date);
+      const prev = new Date(clientInvoices[i - 1].due_date);
+      paymentIntervals.push(Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24)));
+    }
+
+    // Calculate the standard deviation of payment intervals
+    const mean = paymentIntervals.reduce((sum, val) => sum + val, 0) / paymentIntervals.length;
+    const variance = paymentIntervals.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / paymentIntervals.length;
+    const stdDev = Math.sqrt(variance);
+
+    // If standard deviation is less than 7 days, consider it recurring
+    return stdDev < 7;
+  };
+
+  const processClientRisk = (invoices: Invoice[]): ClientRiskData[] => {
+    const clientData = new Map<string, {
+      name: string;
+      industry: string;
+      totalAmount: number;
+      overdueAmount: number;
+      latePayments: number;
+      totalPayments: number;
+    }>();
+
+    invoices.forEach(inv => {
+      if (!inv.client?.id) return;
+
+      if (!clientData.has(inv.client.id)) {
+        clientData.set(inv.client.id, {
+          name: inv.client.name,
+          industry: inv.client.industry,
+          totalAmount: 0,
+          overdueAmount: 0,
+          latePayments: 0,
+          totalPayments: 0
+        });
+      }
+
+      const data = clientData.get(inv.client.id)!;
+      const amount = inv.amount;
+      const dueDate = new Date(inv.due_date);
+      const now = new Date();
+
+      data.totalAmount += amount;
+      if (dueDate < now && inv.status !== 'paid') {
+        data.overdueAmount += amount;
+      }
+
+      if (inv.status === 'paid' && inv.paid_date) {
+        data.totalPayments++;
+        const paidDate = new Date(inv.paid_date);
+        if (paidDate > dueDate) {
+          data.latePayments++;
+        }
+      }
+    });
+
+    // Calculate risk scores
+    return Array.from(clientData.values()).map(client => {
+      const latePaymentRatio = client.totalPayments > 0 ?
+        (client.latePayments / client.totalPayments) * 100 : 0;
+      const overdueRatio = client.totalAmount > 0 ?
+        (client.overdueAmount / client.totalAmount) * 100 : 0;
+
+      // Risk score is weighted average of late payment history and current overdue ratio
+      const riskScore = Math.round((latePaymentRatio * 0.4) + (overdueRatio * 0.6));
+
+      return {
+        name: client.name,
+        industry: client.industry,
+        riskScore: Math.min(100, riskScore),
+        overdueAmount: client.overdueAmount
+      };
+    });
+  };
+
+  const getDateRangeLength = () => {
+    switch (dateRange) {
+      case 'last7':
+        return 7;
+      case 'last30':
+        return 30;
+      case 'last90':
+        return 90;
+      default:
+        return 30;
+    }
+  };
+
+  const handleExport = () => {
+    // Prepare data for each section
+    const paymentTrendsCSV = analyticsData.paymentTrends.map(item => ({
+      Date: new Date(item.date).toLocaleDateString(),
+      'Received Amount': item.received.toFixed(2),
+      'Expected Amount': item.expected.toFixed(2)
+    }));
+
+    const collectionPerformanceCSV = analyticsData.collectionPerformance.map(item => ({
+      'Age Range': item.label,
+      'Collection Rate': `${item.value}%`,
+      'Target': `${item.target}%`,
+      'Performance': item.trend
+    }));
+
+    const agingAnalysisCSV = analyticsData.agingAnalysis.map(item => ({
+      'Age Range': `${item.range} days`,
+      'Amount': item.amount.toFixed(2),
+      'Percentage': `${item.percentage}%`
+    }));
+
+    const clientRiskCSV = analyticsData.clientRisk.map(item => ({
+      'Client Name': item.name,
+      'Industry': item.industry,
+      'Risk Score': item.riskScore,
+      'Overdue Amount': item.overdueAmount.toFixed(2)
+    }));
+
+    // Convert to CSV format
+    const convertToCSV = (data: CSVRow[], title: string) => {
+      if (data.length === 0) return '';
+
+      const headers = Object.keys(data[0]);
+      const rows = data.map(row => headers.map(header => row[header]).join(','));
+
+      return `${title}\n${headers.join(',')}\n${rows.join('\n')}\n\n`;
+    };
+
+    // Combine all sections
+    const csvContent = [
+      `Financial Analytics Report - ${new Date().toLocaleDateString()}\n\n`,
+      'Summary Metrics\n',
+      `Total Receivables,${analyticsData.metrics.totalReceivables.toFixed(2)}\n`,
+      `Average Days to Pay,${analyticsData.metrics.avgDaysToPay}\n`,
+      `Collection Rate,${analyticsData.metrics.collectionRate}%\n`,
+      `Overdue Amount,${analyticsData.metrics.overdueAmount.toFixed(2)}\n\n`,
+      convertToCSV(paymentTrendsCSV, 'Payment Trends'),
+      convertToCSV(collectionPerformanceCSV, 'Collection Performance'),
+      convertToCSV(agingAnalysisCSV, 'Aging Analysis'),
+      convertToCSV(clientRiskCSV, 'Client Risk Analysis')
+    ].join('');
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `financial_analytics_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [dateRange, user]);
 
   return (
     <div className="space-y-6">
