@@ -108,8 +108,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       toast.success('Account created successfully! Please check your email to verify your account.');
-    } catch (error: any) {
-      if (error.message === 'User already registered') {
+    } catch (error: Error | unknown) {
+      if (error instanceof Error && error.message === 'User already registered') {
         toast.error('An account with this email already exists. Please log in instead.');
       } else {
         toast.error('Failed to create account. Please try again.');
