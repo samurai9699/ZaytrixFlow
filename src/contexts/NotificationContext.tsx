@@ -3,20 +3,10 @@ import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
-interface Notification {
-  id: string;
-  user_id: string;
-  type: string;
-  title: string;
-  message: string;
-  link?: string;
-  is_read: boolean;
-  metadata?: any;
-  created_at: string;
-}
+import type { NotificationItem } from '../types';
 
 interface NotificationContextType {
-  notifications: Notification[];
+  notifications: NotificationItem[];
   unreadCount: number;
   loading: boolean;
   markAsRead: (id: string) => Promise<void>;
@@ -30,7 +20,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchNotifications = useCallback(async () => {
@@ -79,7 +69,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            const newNotification = payload.new as Notification;
+            const newNotification = payload.new as NotificationItem;
             setNotifications((prev) => [newNotification, ...prev]);
 
             toast(newNotification.title, {
@@ -88,7 +78,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             });
           } else if (payload.eventType === 'UPDATE') {
             setNotifications((prev) =>
-              prev.map((n) => (n.id === payload.new.id ? (payload.new as Notification) : n))
+              prev.map((n) => (n.id === payload.new.id ? (payload.new as NotificationItem) : n))
             );
           } else if (payload.eventType === 'DELETE') {
             setNotifications((prev) => prev.filter((n) => n.id !== payload.old.id));
