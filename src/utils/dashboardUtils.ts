@@ -1,3 +1,5 @@
+import type { Invoice } from '../types';
+
 export interface InvoiceMetrics {
   totalUnpaid: number;
   totalPending: number;
@@ -47,7 +49,7 @@ export const getActivityType = (status: string) => {
   }
 };
 
-export const getActivityTitle = (invoice: any) => {
+export const getActivityTitle = (invoice: Invoice) => {
   switch (invoice.status) {
     case 'paid': return 'Invoice Paid';
     case 'unpaid': return 'Invoice Overdue';
@@ -57,7 +59,16 @@ export const getActivityTitle = (invoice: any) => {
   }
 };
 
-export const generateRecentActivity = (invoices: any[]) => {
+export interface Activity {
+  id: string;
+  title: string;
+  description: string;
+  time: string;
+  type: string;
+  status: string;
+}
+
+export const generateRecentActivity = (invoices: Invoice[]): Activity[] => {
   return invoices
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5)
@@ -71,7 +82,7 @@ export const generateRecentActivity = (invoices: any[]) => {
     }));
 };
 
-export const generateChartData = (invoices: any[]): ChartData[] => {
+export const generateChartData = (invoices: Invoice[]): ChartData[] => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
   const currentYear = new Date().getFullYear();
   
@@ -101,7 +112,7 @@ export const generateChartData = (invoices: any[]): ChartData[] => {
   });
 };
 
-export const calculateMetrics = (invoices: any[], clientCount: number): InvoiceMetrics => {
+export const calculateMetrics = (invoices: Invoice[], clientCount: number): InvoiceMetrics => {
   return invoices.reduce((acc, invoice) => {
     const amount = parseFloat(invoice.amount.toString());
     
