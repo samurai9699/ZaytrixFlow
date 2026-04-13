@@ -75,6 +75,7 @@ const LoginForm: React.FC = () => {
               <input
                 id="email"
                 type="email"
+                data-testid="email-input"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={`
@@ -102,6 +103,7 @@ const LoginForm: React.FC = () => {
               <input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
+                data-testid="password-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className={`
@@ -148,6 +150,7 @@ const LoginForm: React.FC = () => {
 
           <motion.button
             type="submit"
+            data-testid="login-submit"
             disabled={isLoading}
             className={`
               w-full px-4 py-3 rounded-lg
