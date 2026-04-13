@@ -364,6 +364,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                       ))}
                       <button
                         type="button"
+                        data-testid="add-new-client-btn"
                         onClick={() => setShowNewClientForm(true)}
                         className="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center justify-center gap-2"
                       >
@@ -376,6 +377,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                       <div>
                         <input
                           type="text"
+                          data-testid="client-name-input"
                           placeholder="Client Name"
                           value={clientName}
                           onChange={(e) => setClientName(e.target.value)}
@@ -388,6 +390,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                       <div>
                         <input
                           type="email"
+                          data-testid="client-email-input"
                           placeholder="Client Email"
                           value={clientEmail}
                           onChange={(e) => setClientEmail(e.target.value)}
@@ -416,6 +419,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     </label>
                     <input
                       type="text"
+                      data-testid="invoice-number-input"
                       value={invoiceNumber}
                       onChange={(e) => setInvoiceNumber(e.target.value)}
                       className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 bg-white dark:bg-gray-800"
@@ -468,6 +472,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                       <div className="col-span-12 md:col-span-5">
                         <input
                           type="text"
+                          data-testid={`line-item-desc-${index}`}
                           placeholder="Description"
                           value={item.description}
                           onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
@@ -480,6 +485,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                       <div className="col-span-4 md:col-span-2">
                         <input
                           type="number"
+                          data-testid={`line-item-qty-${index}`}
                           placeholder="Qty"
                           min="0.01"
                           step="0.01"
@@ -491,6 +497,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                       <div className="col-span-4 md:col-span-2">
                         <input
                           type="number"
+                          data-testid={`line-item-rate-${index}`}
                           placeholder="Rate"
                           min="0"
                           step="0.01"
@@ -589,6 +596,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             </button>
             <motion.button
               type="submit"
+              data-testid="submit-invoice-btn"
               onClick={handleSubmit}
               disabled={loading}
               className="px-6 py-2 bg-gradient-to-r from-primary-600 to-secondary-500 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-primary-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
