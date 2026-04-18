@@ -6,7 +6,7 @@ const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
 const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!;
 const stripe = new Stripe(stripeSecret, {
   appInfo: {
-    name: 'Bolt Integration',
+    name: 'ZaytrixFlow',
     version: '1.0.0',
   },
 });
@@ -54,6 +54,14 @@ Deno.serve(async (req) => {
 });
 
 async function handleEvent(event: Stripe.Event) {
+  const USE_V2_WEBHOOKS = Deno.env.get('USE_V2_WEBHOOKS') === 'true';
+
+  if (USE_V2_WEBHOOKS) {
+    console.info(`[V2 Webhooks] Processing event: ${event.id} (${event.type})`);
+    await handleEventV2(event);
+    return;
+  }
+
   const stripeData = event?.data?.object ?? {};
 
   if (!stripeData) {
@@ -188,4 +196,117 @@ async function syncCustomerFromStripe(customerId: string) {
     console.error(`Failed to sync subscription for customer ${customerId}:`, error);
     throw error;
   }
+}
+
+// ============================================
+// V2 WEBHOOK IMPLEMENTATION (RPC DRIVEN)
+// ============================================
+
+async function handleEventV2(event: Stripe.Event) {
+  const stripeData = event?.data?.object as any;
+  if (!stripeData || !('customer' in stripeData)) {
+    return;
+  }
+
+  const customerId = stripeData.customer;
+  if (!customerId || typeof customerId !== 'string') {
+    console.error(`[V2] No valid customer received on event: ${event.id}`);
+    return;
+  }
+
+  let action = 'ignore';
+  let actionData: any = {};
+
+  if (event.type === 'payment_intent.succeeded' && event.data.object.invoice === null) {
+      // Ignored in V1
+      action = 'ignore';
+  } else {
+    let isSubscription = true;
+    if (event.type === 'checkout.session.completed') {
+      const { mode } = stripeData as Stripe.Checkout.Session;
+      isSubscription = mode === 'subscription';
+    }
+
+    const { mode, payment_status } = stripeData as Stripe.Checkout.Session;
+
+    if (isSubscription) {
+      console.info(`[V2] Fetching subscription data for customer: ${customerId}`);
+      const subData = await getSubscriptionDataForV2(customerId);
+      if (subData) {
+         action = 'sync_subscription';
+         actionData = subData;
+      }
+    } else if (mode === 'payment' && payment_status === 'paid') {
+      const checkoutSession = stripeData as Stripe.Checkout.Session;
+      action = 'insert_order';
+      actionData = {
+        checkout_session_id: checkoutSession.id,
+        payment_intent_id: checkoutSession.payment_intent,
+        customer_id: customerId,
+        amount_subtotal: checkoutSession.amount_subtotal,
+        amount_total: checkoutSession.amount_total,
+        currency: checkoutSession.currency,
+        payment_status: checkoutSession.payment_status,
+        status: 'completed',
+      };
+    }
+  }
+
+  // Execute the RPC for safe transaction and idempotency logging
+  const { data, error } = await supabase.rpc('process_stripe_webhook_v2', {
+    p_event_id: event.id,
+    p_event_type: event.type,
+    p_payload: event,
+    p_action: action,
+    p_action_data: actionData
+  });
+
+  if (error) {
+    console.error(`[V2] RPC Database error processing event ${event.id}:`, error);
+    throw new Error(`RPC Database Error: ${error.message}`);
+  }
+
+  // data will contain { success: boolean, message: string, skipped: boolean }
+  const result = data as any;
+  if (result.skipped) {
+    console.warn(`[V2] Skipped processing event ${event.id}: ${result.message}`);
+  } else if (!result.success) {
+    console.error(`[V2] Processing failed for event ${event.id}: ${result.message}`);
+    throw new Error(`V2 Processing Error: ${result.message}`);
+  } else {
+    console.info(`[V2] Successfully processed event ${event.id}: ${result.message}`);
+  }
+}
+
+async function getSubscriptionDataForV2(customerId: string) {
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+    limit: 1,
+    status: 'all',
+    expand: ['data.default_payment_method'],
+  });
+
+  if (subscriptions.data.length === 0) {
+    console.info(`[V2] No active subscriptions found for customer: ${customerId}`);
+    // Return minimal payload so RPC updates/inserts as not_started
+    return {
+      customer_id: customerId,
+      subscription_status: 'not_started'
+    };
+  }
+
+  const subscription = subscriptions.data[0];
+  const paymentMethod = subscription.default_payment_method as Stripe.PaymentMethod | null;
+  
+  return {
+    customer_id: customerId,
+    subscription_id: subscription.id,
+    price_id: subscription.items.data[0].price.id,
+    current_period_start: subscription.current_period_start,
+    current_period_end: subscription.current_period_end,
+    cancel_at_period_end: subscription.cancel_at_period_end,
+    payment_method_brand: paymentMethod?.card?.brand ?? null,
+    payment_method_last4: paymentMethod?.card?.last4 ?? null,
+    status: subscription.status,
+  };
 }
