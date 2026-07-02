@@ -19,13 +19,29 @@ export interface ChartData {
   total: number;
 }
 
-export const formatCurrency = (amount: number) => {
+export const formatCurrency = (amount: number, currency: string = 'USD') => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
+};
+
+export const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
+export const formatDateLong = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 };
 
 export const getRelativeTime = (dateString: string) => {
