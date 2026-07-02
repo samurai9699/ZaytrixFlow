@@ -5,8 +5,6 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  ArrowUpRight,
-  ArrowDownRight,
   TrendingUp,
   Calendar,
   Users,
@@ -96,8 +94,6 @@ const DashboardOverview: React.FC = () => {
             value: metrics.totalUnpaid,
             amount: metrics.unpaidAmount,
             icon: <AlertCircle className="text-error-600 dark:text-error-400" />,
-            change: '+2 from last month',
-            positive: true,
             gradient: 'from-error-500/10 to-error-600/10'
           },
           {
@@ -105,8 +101,6 @@ const DashboardOverview: React.FC = () => {
             value: metrics.totalPending,
             amount: metrics.pendingAmount,
             icon: <Clock className="text-warning-600 dark:text-warning-400" />,
-            change: '+1 from last month',
-            positive: true,
             gradient: 'from-warning-500/10 to-warning-600/10'
           },
           {
@@ -114,8 +108,6 @@ const DashboardOverview: React.FC = () => {
             value: metrics.totalUpcoming,
             amount: metrics.upcomingAmount,
             icon: <Calendar className="text-primary-600 dark:text-primary-400" />,
-            change: '+3 from last month',
-            positive: true,
             gradient: 'from-primary-500/10 to-primary-600/10'
           },
           {
@@ -123,8 +115,6 @@ const DashboardOverview: React.FC = () => {
             value: metrics.totalPaid,
             amount: metrics.paidAmount,
             icon: <CheckCircle className="text-success-600 dark:text-success-400" />,
-            change: '+5 from last month',
-            positive: true,
             gradient: 'from-success-500/10 to-success-600/10'
           }
         ].map((stat, index) => (
@@ -139,12 +129,6 @@ const DashboardOverview: React.FC = () => {
               <div className="p-2 rounded-lg bg-white/50 dark:bg-gray-800/50">
                 {stat.icon}
               </div>
-              <span className={`text-sm font-medium flex items-center gap-1 ${
-                stat.positive ? 'text-success-600 dark:text-success-400' : 'text-error-600 dark:text-error-400'
-              }`}>
-                {stat.positive ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                {stat.change}
-              </span>
             </div>
             <div className="space-y-1">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
