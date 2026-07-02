@@ -28,6 +28,7 @@ import DeleteConfirmationModal from './DeleteConfirmationModal';
 import { generateInvoicePDF } from '../../../utils/pdfGenerator';
 import { sendInvoiceEmail } from '../../../services/emailService';
 import FilterPresets from '../../common/FilterPresets';
+import { formatCurrency, formatDate } from '../../../utils/dashboardUtils';
 
 import type { Invoice, LineItem } from '../../../types';
 
@@ -251,21 +252,6 @@ const InvoiceList: React.FC = () => {
       default:
         return <FileText size={16} className="text-gray-600 dark:text-gray-400" />;
     }
-  };
-
-  const formatCurrency = (amount: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
   };
 
   const isOverdue = (invoice: Invoice) => {
@@ -620,3 +606,4 @@ const InvoiceList: React.FC = () => {
 };
 
 export default InvoiceList;
+
