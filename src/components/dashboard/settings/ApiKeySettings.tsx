@@ -4,6 +4,7 @@ import { Key, Plus, Copy, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
+import { formatDate } from '../../../utils/dashboardUtils';
 
 interface ApiKey {
   id: string;
@@ -139,14 +140,6 @@ const ApiKeySettings: React.FC = () => {
     } catch (error) {
       toast.error('Failed to copy to clipboard');
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
   };
 
   return (
