@@ -1,5 +1,6 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { formatCurrency } from '../../../../utils/dashboardUtils';
 
 interface PaymentTrendsProps {
   data: Array<{
@@ -11,15 +12,6 @@ interface PaymentTrendsProps {
 }
 
 const PaymentTrends: React.FC<PaymentTrendsProps> = ({ data, dateRange }) => {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     switch (dateRange) {
