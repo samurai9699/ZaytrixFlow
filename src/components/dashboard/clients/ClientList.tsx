@@ -21,6 +21,7 @@ import EditClientModal from './EditClientModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import ClientInvoicesModal from './ClientInvoicesModal';
 import FilterPresets from '../../common/FilterPresets';
+import { formatCurrency, formatDate } from '../../../utils/dashboardUtils';
 
 import type { ClientWithStats as Client } from '../../../types';
 
@@ -75,50 +76,52 @@ const ClientList: React.FC = () => {
 
     try {
       setLoading(true);
-      
-      // Fetch clients with invoice statistics
-      const { data: clientsData, error: clientsError } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
 
-      if (clientsError) throw clientsError;
+      // Fetch all clients and invoices in parallel — 2 queries instead of N+1
+      const [clientsResult, invoicesResult] = await Promise.all([
+        supabase
+          .from('clients')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('invoices')
+          .select('client_id, client_name, client_email, amount, created_at')
+          .eq('user_id', user.id)
+      ]);
 
-      // Fetch invoice statistics for each client
-      const clientsWithStats = await Promise.all(
-        (clientsData || []).map(async (client) => {
-          // Get invoices that either have the client_id set or match the client's name and email
-          const { data: invoiceStats, error: statsError } = await supabase
-            .from('invoices')
-            .select('amount, created_at')
-            .eq('user_id', user.id)
-            .or(`client_id.eq.${client.id},and(client_name.eq.${client.name},client_email.eq.${client.email})`);
+      if (clientsResult.error) throw clientsResult.error;
 
-          if (statsError) {
-            console.error('Error fetching invoice stats:', statsError);
-            return {
-              ...client,
-              total_invoices: 0,
-              total_amount: 0,
-              last_invoice_date: null
-            };
-          }
+      const allInvoices = invoicesResult.data || [];
 
-          const totalInvoices = invoiceStats?.length || 0;
-          const totalAmount = invoiceStats?.reduce((sum, inv) => sum + parseFloat(inv.amount.toString()), 0) || 0;
-          const lastInvoiceDate = invoiceStats?.length > 0 
-            ? invoiceStats.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at
+      // Compute stats per client client-side
+      const clientsWithStats = (clientsResult.data || []).map((client) => {
+        const matchingInvoices = allInvoices.filter(
+          (inv) =>
+            inv.client_id === client.id ||
+            (inv.client_name === client.name && inv.client_email === client.email)
+        );
+
+        const totalInvoices = matchingInvoices.length;
+        const totalAmount = matchingInvoices.reduce(
+          (sum, inv) => sum + parseFloat(inv.amount.toString()),
+          0
+        );
+        const lastInvoiceDate =
+          matchingInvoices.length > 0
+            ? matchingInvoices.sort(
+                (a, b) =>
+                  new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+              )[0].created_at
             : null;
 
-          return {
-            ...client,
-            total_invoices: totalInvoices,
-            total_amount: totalAmount,
-            last_invoice_date: lastInvoiceDate
-          };
-        })
-      );
+        return {
+          ...client,
+          total_invoices: totalInvoices,
+          total_amount: totalAmount,
+          last_invoice_date: lastInvoiceDate,
+        };
+      });
 
       setClients(clientsWithStats);
     } catch (error) {
@@ -207,23 +210,6 @@ const ClientList: React.FC = () => {
   const handleViewInvoices = (client: Client) => {
     setSelectedClient(client);
     setShowInvoicesModal(true);
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
   };
 
   if (loading) {
