@@ -589,20 +589,14 @@ const AnalyticsDashboard: React.FC = () => {
                   currency: 'USD',
                   maximumFractionDigits: 0
                 }).format(analyticsData.metrics.totalReceivables),
-                change: '+12.5%',
-                trend: 'up',
               },
               {
                 title: 'Average Days to Pay',
                 value: `${analyticsData.metrics.avgDaysToPay} days`,
-                change: '-2.3 days',
-                trend: 'down',
               },
               {
                 title: 'Collection Rate',
                 value: `${analyticsData.metrics.collectionRate}%`,
-                change: '+3.2%',
-                trend: 'up',
               },
               {
                 title: 'Overdue Amount',
@@ -611,8 +605,6 @@ const AnalyticsDashboard: React.FC = () => {
                   currency: 'USD',
                   maximumFractionDigits: 0
                 }).format(analyticsData.metrics.overdueAmount),
-                change: '-15.4%',
-                trend: 'down',
               },
             ].map((metric, index) => (
               <motion.div
@@ -625,15 +617,9 @@ const AnalyticsDashboard: React.FC = () => {
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
                   {metric.title}
                 </h3>
-                <div className="flex items-end justify-between">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {metric.value}
-                  </p>
-                  <span className={`text-sm font-medium ${metric.trend === 'up' ? 'text-success-600' : 'text-error-600'
-                    }`}>
-                    {metric.change}
-                  </span>
-                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {metric.value}
+                </p>
               </motion.div>
             ))}
           </div>
