@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
+import { formatCurrency } from '../../../utils/dashboardUtils';
 
 interface Reminder {
   id: string;
@@ -180,13 +181,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ isOpen, onClo
   const handleClose = () => {
     resetForm();
     onClose();
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
   };
 
   if (!isOpen) return null;
