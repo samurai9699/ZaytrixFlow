@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, Send } from 'lucide-react';
 import { generateInvoicePDF } from '../../../utils/pdfGenerator';
 import { toast } from 'sonner';
+import { formatCurrency, formatDateLong } from '../../../utils/dashboardUtils';
 
 import { Invoice } from '../../../types';
 import { isLineItemArray } from '../../../utils/typeGuards';
@@ -15,21 +16,6 @@ interface InvoicePreviewModalProps {
 
 const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({ isOpen, onClose, invoice }) => {
   if (!isOpen || !invoice) return null;
-
-  const formatCurrency = (amount: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
 
   const handleDownloadPDF = async () => {
     try {
@@ -136,8 +122,8 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({ isOpen, onClo
                   <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">INVOICE</h1>
                   <div className="text-gray-600 dark:text-gray-300">
                     <p className="font-medium">{invoice.invoice_number}</p>
-                    <p>Issue Date: {formatDate(invoice.issue_date)}</p>
-                    <p>Due Date: {formatDate(invoice.due_date)}</p>
+                    <p>Issue Date: {formatDateLong(invoice.issue_date)}</p>
+                    <p>Due Date: {formatDateLong(invoice.due_date)}</p>
                   </div>
                 </div>
                 <div className="text-right">
