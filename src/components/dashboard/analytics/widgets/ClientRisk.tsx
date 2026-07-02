@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { formatCurrency } from '../../../../utils/dashboardUtils';
 
 interface ClientRiskProps {
   data: Array<{
@@ -11,15 +12,6 @@ interface ClientRiskProps {
 }
 
 const ClientRisk: React.FC<ClientRiskProps> = ({ data }) => {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
-
   const getRiskColor = (score: number) => {
     if (score <= 30) return 'bg-success-500';
     if (score <= 60) return 'bg-warning-500';
