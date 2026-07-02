@@ -260,10 +260,10 @@ const SubscriptionSettings: React.FC = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.entries(STRIPE_PRODUCTS).map(([id, product]) => (
-                <div 
+                <div
                   key={id}
                   className={`p-6 rounded-xl border ${
-                    product.priceId === subscription.priceId
+                    (product.monthlyPriceId === subscription.priceId || product.annualPriceId === subscription.priceId)
                       ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
                       : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
                   }`}
@@ -276,12 +276,12 @@ const SubscriptionSettings: React.FC = () => {
                   </p>
                   <div className="flex items-baseline mb-4">
                     <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                      ${product.price}
+                      ${product.monthlyPrice}
                     </span>
                     <span className="text-gray-500 dark:text-gray-400 ml-1">/month</span>
                   </div>
-                  
-                  {product.priceId === subscription.priceId ? (
+
+                  {(product.monthlyPriceId === subscription.priceId || product.annualPriceId === subscription.priceId) ? (
                     <div className="flex items-center text-success-600 dark:text-success-400 font-medium">
                       <CheckCircle size={16} className="mr-2" />
                       Current Plan
@@ -331,11 +331,11 @@ const SubscriptionSettings: React.FC = () => {
                 </p>
                 <div className="flex items-baseline mb-4">
                   <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${product.price}
+                    ${product.monthlyPrice}
                   </span>
                   <span className="text-gray-500 dark:text-gray-400 ml-1">/month</span>
                 </div>
-                
+
                 <Link
                   to={`/checkout/${id}`}
                   className="block w-full text-center px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors"
