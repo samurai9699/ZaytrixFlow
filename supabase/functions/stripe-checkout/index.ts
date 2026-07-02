@@ -4,9 +4,18 @@ import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
 
 const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
 const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
+
+// Only allow known price IDs to prevent abuse
+const ALLOWED_PRICE_IDS = new Set([
+  'price_1RX7OODnl7eA7o2ILPyqAk3r',  // Pro monthly
+  'price_1RX7TcDnl7eA7o2IAROVqhIK',  // Pro annual
+  'price_1RX7RLDnl7eA7o2ImjEdcoOa',  // Premium monthly
+  'price_1RX7SPDnl7eA7o2IuZTSsS3Y',  // Premium annual
+]);
+
 const stripe = new Stripe(stripeSecret, {
-  appInfo: {
-    name: 'Bolt Integration',
+    appInfo: {
+    name: 'ZaytrixFlow',
     version: '1.0.0',
   },
 });
@@ -57,6 +66,10 @@ Deno.serve(async (req) => {
 
     if (error) {
       return corsResponse({ error }, 400);
+    }
+
+    if (!ALLOWED_PRICE_IDS.has(price_id)) {
+      return corsResponse({ error: 'Invalid price ID' }, 400);
     }
 
     const authHeader = req.headers.get('Authorization')!;
