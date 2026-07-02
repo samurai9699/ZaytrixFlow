@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, FileText, Calendar, DollarSign, Eye } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
+import { formatCurrency, formatDate } from '../../../utils/dashboardUtils';
 
 import type { Client } from '../../../types';
 
@@ -68,21 +69,6 @@ const ClientInvoicesModal: React.FC<ClientInvoicesModalProps> = ({ isOpen, onClo
       default:
         return 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400';
     }
-  };
-
-  const formatCurrency = (amount: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
   };
 
   if (!isOpen || !client) return null;
@@ -215,3 +201,4 @@ const ClientInvoicesModal: React.FC<ClientInvoicesModalProps> = ({ isOpen, onClo
 };
 
 export default ClientInvoicesModal;
+
