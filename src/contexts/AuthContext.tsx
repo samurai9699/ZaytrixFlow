@@ -101,8 +101,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ]);
 
         if (profileError) {
-          // If profile creation fails, we should delete the auth user
-          await supabase.auth.admin.deleteUser(data.user.id);
+          // Profile creation failed — sign out the newly created auth user
+          // so they're not left in a broken logged-in state
+          await supabase.auth.signOut();
           throw profileError;
         }
       }
