@@ -52,6 +52,7 @@ const ProtectedRoute = React.lazy(() => import('./components/auth/ProtectedRoute
 // Lazy load footer pages
 const AboutPage = React.lazy(() => import('./components/pages/AboutPage'));
 const BlogPage = React.lazy(() => import('./components/pages/BlogPage'));
+const BlogPostPage = React.lazy(() => import('./components/pages/BlogPostPage'));
 const RoadmapPage = React.lazy(() => import('./components/pages/RoadmapPage'));
 const IntegrationsPage = React.lazy(() => import('./components/pages/IntegrationsPage'));
 const CareersPage = React.lazy(() => import('./components/pages/CareersPage'));
@@ -188,6 +189,14 @@ function App() {
               <PageTransition>
                 <Suspense fallback={<LoadingSpinner />}>
                   <AboutPage />
+                </Suspense>
+              </PageTransition>
+            } />
+
+            <Route path="/blog/:slug" element={
+              <PageTransition>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <BlogPostPage />
                 </Suspense>
               </PageTransition>
             } />
